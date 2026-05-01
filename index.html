@@ -277,6 +277,39 @@
   .banner.success { background: var(--success-bg); border-color: rgba(31,107,58,0.25); color: var(--success); }
   .banner.error   { background: var(--error-bg);   border-color: rgba(184,64,51,0.25);  color: var(--error); }
   .banner strong  { display: block; margin-bottom: 4px; font-weight: 600; }
+
+  /* Link de pagamento + botão copiar dentro do banner */
+  .payment-link-wrap {
+    display: flex; align-items: stretch; gap: 8px;
+    margin-top: 12px; padding: 6px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(31,107,58,0.18);
+    border-radius: var(--radius);
+  }
+  .payment-link {
+    flex: 1; min-width: 0;
+    display: flex; align-items: center;
+    padding: 0 10px;
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    color: var(--success); text-decoration: none;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .payment-link:hover { text-decoration: underline; }
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px;
+    background: var(--surface);
+    border: 1px solid rgba(31,107,58,0.3);
+    border-radius: 6px;
+    color: var(--success);
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { background: var(--success); color: #fff; border-color: var(--success); }
+  .copy-btn:active { transform: scale(0.97); }
+  .copy-btn.copied { background: var(--success); color: #fff; border-color: var(--success); }
+  .copy-btn svg { width: 13px; height: 13px; }
   @keyframes slideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
   .card .section, .card .actions { opacity: 0; animation: fadeUp 0.4s ease-out forwards; }
@@ -464,10 +497,51 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmtBRL = (n) => (isNaN(n) ? 0 : n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtPct = (n) => round2(n || 0) + "%";
 
-function showBanner(type, title, message) {
+function showBanner(type, title, message, paymentLink) {
   const b = $("banner");
   b.className = "banner show " + type;
-  b.innerHTML = `<strong>${escapeHtml(title)}</strong>${escapeHtml(message || "")}`;
+  let html = `<strong>${escapeHtml(title)}</strong>${escapeHtml(message || "")}`;
+  if (paymentLink) {
+    html += `
+      <div class="payment-link-wrap">
+        <a href="${escapeAttr(paymentLink)}" target="_blank" rel="noopener" class="payment-link" title="${escapeAttr(paymentLink)}">${escapeHtml(paymentLink)}</a>
+        <button type="button" class="copy-btn" data-copy="${escapeAttr(paymentLink)}" aria-label="Copiar link de pagamento">
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="4.5" y="4.5" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M3 11.5V3.5C3 2.67 3.67 2 4.5 2H10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <span class="copy-label">Copiar</span>
+        </button>
+      </div>`;
+  }
+  b.innerHTML = html;
+
+  const copyBtn = b.querySelector(".copy-btn");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", async () => {
+      const link = copyBtn.dataset.copy;
+      const label = copyBtn.querySelector(".copy-label");
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch (_) {
+        // fallback pra navegadores antigos / contextos sem permissão
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (__) { /* nada */ }
+        ta.remove();
+      }
+      copyBtn.classList.add("copied");
+      label.textContent = "Copiado";
+      setTimeout(() => {
+        copyBtn.classList.remove("copied");
+        label.textContent = "Copiar";
+      }, 1800);
+    });
+  }
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function hideBanner() { $("banner").className = "banner"; }
@@ -945,9 +1019,25 @@ async function handleSubmit(e) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+    // n8n pode responder com { link_pagamento: "..." } ou um array,
+    // ou ainda devolver vazio — todos os casos são tratados.
+    let paymentLink = "";
+    try {
+      const txt = await res.text();
+      if (txt) {
+        const data = JSON.parse(txt);
+        const node = Array.isArray(data) ? data[0] : data;
+        paymentLink = node?.link_pagamento || node?.linkPagamento ||
+                      node?.invoiceUrl || node?.bankSlipUrl || "";
+      }
+    } catch (_) { /* resposta sem JSON, segue sem link */ }
+
     showBanner("success",
       chargeType === "subscription" ? "Assinatura solicitada com sucesso" : "Cobrança solicitada com sucesso",
-      "Tudo certo. Você já pode preencher uma nova solicitação quando quiser.");
+      paymentLink
+        ? "Aqui está o link para enviar ao cliente:"
+        : "Tudo certo. Você já pode preencher uma nova solicitação quando quiser.",
+      paymentLink);
     resetForm();
   } catch (err) {
     console.error(err);
