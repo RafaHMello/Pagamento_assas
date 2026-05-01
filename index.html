@@ -32,12 +32,9 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    font-size: 15px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    background: var(--bg); color: var(--ink);
+    font-size: 15px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; min-height: 100vh;
     background-image:
       radial-gradient(circle at 0% 0%, rgba(15,15,14,0.025) 0%, transparent 40%),
       radial-gradient(circle at 100% 100%, rgba(15,15,14,0.02) 0%, transparent 35%);
@@ -58,20 +55,34 @@
 
   h1.title {
     font-family: 'Bricolage Grotesque', serif;
-    font-weight: 500;
-    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 500; font-size: clamp(32px, 5vw, 44px);
     line-height: 1.05; letter-spacing: -0.02em;
     margin: 0 0 12px; color: var(--ink);
   }
   .title em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
-  .subtitle { font-size: 15px; color: var(--ink-soft); margin: 0 0 32px; max-width: 52ch; }
+  .subtitle { font-size: 15px; color: var(--ink-soft); margin: 0 0 24px; max-width: 52ch; }
+
+  .type-toggle {
+    display: inline-flex;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px; margin-bottom: 24px;
+    box-shadow: 0 1px 2px rgba(15,15,14,0.04);
+  }
+  .type-btn {
+    padding: 7px 16px; border: none; background: transparent;
+    color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    border-radius: 999px; cursor: pointer;
+    transition: all 0.18s; letter-spacing: 0.005em;
+  }
+  .type-btn:hover:not(.active) { color: var(--ink); }
+  .type-btn.active { background: var(--ink); color: #fff; }
 
   .card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
+    box-shadow: var(--shadow-md); overflow: hidden;
   }
   .section { padding: 28px 32px; border-bottom: 1px solid var(--line); }
   .section:last-of-type { border-bottom: none; }
@@ -84,15 +95,12 @@
     font-family: 'Geist Mono', monospace;
     font-size: 11px; font-weight: 500;
     color: var(--ink-mute);
-    text-transform: uppercase; letter-spacing: 0.12em;
-    margin: 0;
+    text-transform: uppercase; letter-spacing: 0.12em; margin: 0;
   }
 
   .field { margin-bottom: 18px; }
   .field:last-child { margin-bottom: 0; }
-  .field-row {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-  }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
   label {
     display: block; font-size: 13px; font-weight: 500;
@@ -100,6 +108,7 @@
   }
   label .req { color: var(--error); margin-left: 2px; }
   label .hint { font-weight: 400; color: var(--ink-mute); font-size: 12px; margin-left: 6px; }
+  .field-help { font-size: 12px; color: var(--ink-mute); margin-top: 6px; line-height: 1.4; }
 
   input[type="text"], input[type="number"], input[type="date"], textarea, select {
     width: 100%; padding: 10px 12px;
@@ -132,21 +141,48 @@
     color: var(--ink-mute); pointer-events: none;
   }
 
-  .splits-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .splits-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
   .split-row {
-    display: grid; grid-template-columns: 1fr 130px 36px;
-    gap: 10px; align-items: end;
     padding: 14px;
     border: 1px solid var(--line); border-radius: var(--radius);
     background: var(--surface-alt);
     transition: border-color 0.15s, background 0.15s;
   }
   .split-row.invalid { border-color: var(--error); background: var(--error-bg); }
+  .split-row .row-grid {
+    display: grid;
+    grid-template-columns: 1fr 64px 110px 36px;
+    gap: 10px; align-items: end;
+  }
   .split-row label {
     font-size: 11px; font-family: 'Geist Mono', monospace;
     color: var(--ink-mute); text-transform: uppercase;
     letter-spacing: 0.08em; font-weight: 500;
   }
+  .split-equiv {
+    margin-top: 8px;
+    font-size: 11.5px; color: var(--ink-mute);
+    font-family: 'Geist Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .split-equiv.error { color: var(--error); }
+
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-radius: var(--radius); padding: 2px;
+    height: 38px; width: 100%;
+  }
+  .mode-btn {
+    flex: 1; min-width: 26px;
+    border: none; background: transparent; cursor: pointer;
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    color: var(--ink-soft); border-radius: 5px;
+    transition: all 0.15s; padding: 0 4px;
+  }
+  .mode-btn.active { background: var(--ink); color: #fff; }
+  .mode-btn:hover:not(.active) { color: var(--ink); }
+
   .remove-btn {
     height: 38px; width: 36px;
     border: 1px solid var(--line-strong); background: var(--surface);
@@ -171,17 +207,25 @@
   }
   .add-split-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .sum-indicator {
+  .sum-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 3px 8px; border-radius: 6px;
+    padding: 4px 10px; border-radius: 999px;
     font-family: 'Geist Mono', monospace; font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    transition: background 0.2s;
+    font-variant-numeric: tabular-nums; cursor: pointer;
+    transition: all 0.15s; user-select: none;
+    border: 1px solid transparent;
   }
-  .sum-indicator.ok { background: var(--success-bg); color: var(--success); }
-  .sum-indicator.warn { background: var(--warn-bg); color: var(--warn); }
-  .sum-indicator.error { background: var(--error-bg); color: var(--error); }
-  .sum-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .sum-pill:hover { filter: brightness(0.97); }
+  .sum-pill.ok    { background: var(--success-bg); color: var(--success); border-color: rgba(31,107,58,0.2); }
+  .sum-pill.warn  { background: var(--warn-bg);    color: var(--warn);    border-color: rgba(138,106,26,0.2); }
+  .sum-pill.error { background: var(--error-bg);   color: var(--error);   border-color: rgba(184,64,51,0.2); }
+  .sum-pill .sep { opacity: 0.5; }
+  .sum-pill .toggle-hint { font-size: 10px; opacity: 0.55; margin-left: 4px; }
+  .sum-label-text {
+    font-family: 'Geist', sans-serif;
+    font-size: 12px; color: var(--ink-soft);
+    margin-right: 6px; font-weight: 400;
+  }
 
   .actions {
     padding: 24px 32px; background: var(--surface-alt);
@@ -200,6 +244,12 @@
   .submit-btn:disabled {
     background: var(--line-strong); color: var(--ink-mute); cursor: not-allowed;
   }
+  .submit-block-msg {
+    font-size: 12px; color: var(--error); text-align: center;
+    margin: 10px 0 0; display: none;
+  }
+  .submit-block-msg.show { display: block; }
+
   .spinner {
     width: 14px; height: 14px;
     border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
@@ -233,10 +283,11 @@
   .card .section:nth-child(1) { animation-delay: 0.05s; }
   .card .section:nth-child(2) { animation-delay: 0.10s; }
   .card .actions { animation-delay: 0.15s; }
-  .title, .subtitle, .brand { opacity: 0; animation: fadeUp 0.4s ease-out forwards; }
+  .title, .subtitle, .brand, .type-toggle { opacity: 0; animation: fadeUp 0.4s ease-out forwards; }
   .brand { animation-delay: 0s; }
   .title { animation-delay: 0.05s; }
   .subtitle { animation-delay: 0.1s; }
+  .type-toggle { animation-delay: 0.12s; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   @media (max-width: 540px) {
@@ -244,7 +295,7 @@
     .section { padding: 22px 20px; }
     .actions { padding: 18px 20px; }
     .field-row { grid-template-columns: 1fr; gap: 18px; }
-    .split-row { grid-template-columns: 1fr 100px 32px; gap: 8px; padding: 12px; }
+    .split-row .row-grid { grid-template-columns: 1fr 56px 90px 32px; gap: 8px; }
   }
 </style>
 </head>
@@ -259,6 +310,11 @@
   <h1 class="title">Nova cobrança <em>com split</em></h1>
   <p class="subtitle">Preencha os dados e enviamos para processamento. A cobrança será gerada no Asaas com a divisão configurada.</p>
 
+  <div class="type-toggle" role="tablist" aria-label="Tipo de cobrança">
+    <button type="button" class="type-btn active" data-type="payment" role="tab">Cobrança única</button>
+    <button type="button" class="type-btn" data-type="subscription" role="tab">Assinatura</button>
+  </div>
+
   <div id="banner" class="banner" role="status"></div>
 
   <form id="form" class="card" novalidate>
@@ -266,7 +322,7 @@
     <!-- ========== 01 · DADOS DA COBRANÇA ========== -->
     <div class="section">
       <div class="section-head">
-        <h2 class="section-title">01 · Dados da cobrança</h2>
+        <h2 class="section-title" id="section-1-title">01 · Dados da cobrança</h2>
       </div>
 
       <div class="field">
@@ -299,20 +355,32 @@
             <option value="12">12x</option>
           </select>
         </div>
+
+        <div class="field" id="cycle-field" style="display:none;">
+          <label for="cycle">Ciclo <span class="req">*</span></label>
+          <select id="cycle" name="cycle">
+            <option value="MONTHLY">Mensal</option>
+            <option value="WEEKLY">Semanal</option>
+            <option value="BIWEEKLY">Quinzenal</option>
+            <option value="QUARTERLY">Trimestral</option>
+            <option value="SEMIANNUALLY">Semestral</option>
+            <option value="YEARLY">Anual</option>
+          </select>
+        </div>
       </div>
 
       <div class="field-row">
         <div class="field">
-          <label for="value">Valor total <span class="req">*</span></label>
+          <label for="value"><span id="value-label">Valor total</span> <span class="req">*</span></label>
           <div class="input-prefix">
             <span class="prefix">R$</span>
             <input type="text" id="value" name="value" class="numeric"
-              inputmode="decimal" placeholder="0.00" required autocomplete="off" />
+              inputmode="decimal" placeholder="0,00" required autocomplete="off" />
           </div>
         </div>
 
         <div class="field">
-          <label for="dueDate">Vencimento <span class="req">*</span></label>
+          <label for="dueDate"><span id="duedate-label">Vencimento</span> <span class="req">*</span></label>
           <input type="date" id="dueDate" name="dueDate" required />
         </div>
       </div>
@@ -321,6 +389,7 @@
         <label for="description">Descrição</label>
         <textarea id="description" name="description" maxlength="500"
           placeholder="Ex.: Mensalidade — Plano Pró — Maio/2026"></textarea>
+        <p class="field-help">Esse texto aparece no link de pagamento que o cliente recebe.</p>
       </div>
     </div>
 
@@ -328,11 +397,12 @@
     <div class="section">
       <div class="section-head">
         <h2 class="section-title">02 · Divisão (split)</h2>
-        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--ink-soft);">
-          Soma:
-          <span id="sum-indicator" class="sum-indicator warn">
-            <span class="dot"></span><span id="sum-value">0%</span>
-          </span>
+        <span id="sum-wrap">
+          <span class="sum-label-text">Principal / Splits:</span>
+          <button type="button" id="sum-pill" class="sum-pill warn" aria-label="Alternar entre porcentagem e valor">
+            <span id="sum-text">100% / 0%</span>
+            <span class="toggle-hint" id="sum-toggle-hint">↺</span>
+          </button>
         </span>
       </div>
 
@@ -345,6 +415,7 @@
       <button type="submit" id="submit-btn" class="submit-btn">
         <span class="btn-label">Gerar cobrança</span>
       </button>
+      <p id="block-msg" class="submit-block-msg">A soma dos splits ultrapassa 100%. Ajuste antes de enviar.</p>
     </div>
 
   </form>
@@ -352,23 +423,15 @@
 
 <script>
 // ============================================================
-// CONFIGURAÇÃO  (edite aqui)
+// CONFIGURAÇÃO
 // ============================================================
 const CONFIG = {
-  // Webhook do n8n que recebe os dados do form (POST)
   WEBHOOK_URL: "https://n8n.dreamcommerce.com.br/webhook/067abb3a-5d5c-4e22-8393-42b4bb2503bd",
-
-  // ID da planilha (entre /d/ e /edit na URL)
   SHEET_ID: "1i5QfaJhw7CbJk47HUgSOr7Ff5kHfIkyJhUHk0_-KqIk",
-
-  // Aba e coluna onde estão os customer_id (Asaas)
   CUSTOMERS_SHEET: "Clientes",
   CUSTOMERS_RANGE: "D:D",
-
-  // Aba e coluna onde estão os walletId (Asaas)
-  WALLETS_SHEET: "Carteiras para Splits",
-  WALLETS_RANGE: "A:A",
-
+  WALLETS_SHEET:   "Carteiras para Splits",
+  WALLETS_RANGE:   "A:A",
   MAX_SPLITS: 5
 };
 
@@ -377,7 +440,9 @@ const CONFIG = {
 // ============================================================
 let customers = [];
 let wallets = [];
-let splitRows = [];
+let chargeType = "payment";       // "payment" | "subscription"
+let sumDisplayMode = "percent";   // "percent" | "currency"
+let splitRows = [];               // [{ id, walletId, mode, input }]
 
 // ============================================================
 // HELPERS
@@ -389,26 +454,34 @@ const escapeHtml = (s) => String(s ?? "")
   .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 const escapeAttr = escapeHtml;
 
+function parseNumber(s) {
+  if (s == null) return NaN;
+  const v = String(s).trim().replace(",", ".");
+  if (!v) return NaN;
+  return parseFloat(v);
+}
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+const fmtBRL = (n) => (isNaN(n) ? 0 : n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const fmtPct = (n) => round2(n || 0) + "%";
+
 function showBanner(type, title, message) {
   const b = $("banner");
   b.className = "banner show " + type;
   b.innerHTML = `<strong>${escapeHtml(title)}</strong>${escapeHtml(message || "")}`;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
-function hideBanner() {
-  $("banner").className = "banner";
-}
+function hideBanner() { $("banner").className = "banner"; }
+
 function setSubmitting(on) {
   const btn = $("submit-btn");
   btn.disabled = on;
-  btn.innerHTML = on
-    ? '<div class="spinner"></div><span>Enviando…</span>'
-    : '<span class="btn-label">Gerar cobrança</span>';
+  if (on) btn.innerHTML = '<div class="spinner"></div><span>Enviando…</span>';
+  else btn.innerHTML = `<span class="btn-label">${chargeType === "subscription" ? "Gerar assinatura" : "Gerar cobrança"}</span>`;
 }
 
 // ============================================================
-// CSV PARSING (Google Sheets gviz endpoint)
+// CSV / SHEETS
 // ============================================================
-// Parser tolerante a aspas e vírgulas dentro de valores
 function parseCSV(text) {
   const rows = [];
   let row = [], cur = "", inQuotes = false;
@@ -417,23 +490,20 @@ function parseCSV(text) {
     if (inQuotes) {
       if (c === '"') {
         if (text[i+1] === '"') { cur += '"'; i++; }
-        else { inQuotes = false; }
-      } else { cur += c; }
+        else inQuotes = false;
+      } else cur += c;
     } else {
       if (c === '"') inQuotes = true;
       else if (c === ',') { row.push(cur); cur = ""; }
       else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
-      else if (c === '\r') { /* skip */ }
-      else { cur += c; }
+      else if (c === '\r') {/* skip */}
+      else cur += c;
     }
   }
   if (cur.length || row.length) { row.push(cur); rows.push(row); }
   return rows;
 }
 
-// Lê uma coluna de uma aba do Sheets via gviz.
-// idValidator é um regex/função que reconhece um ID válido — usado pra
-// detectar se a primeira linha é cabeçalho (e pular) ou já é dado.
 async function fetchSheetColumn(sheetName, range, idValidator) {
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq`
             + `?tqx=out:csv`
@@ -444,17 +514,10 @@ async function fetchSheetColumn(sheetName, range, idValidator) {
   const text = await res.text();
 
   const rows = parseCSV(text);
-  const values = rows
-    .map(r => String(r[0] ?? "").trim())
-    .filter(v => v.length > 0);
+  const values = rows.map(r => String(r[0] ?? "").trim()).filter(v => v.length > 0);
+  if (values.length && idValidator && !idValidator(values[0])) values.shift();
 
-  // Se o 1º valor não passa no validador, é cabeçalho — descarta
-  if (values.length && idValidator && !idValidator(values[0])) {
-    values.shift();
-  }
-  // Dedup mantendo ordem
-  const seen = new Set();
-  const out = [];
+  const seen = new Set(); const out = [];
   for (const id of values) {
     if (seen.has(id)) continue;
     seen.add(id);
@@ -463,11 +526,7 @@ async function fetchSheetColumn(sheetName, range, idValidator) {
   return out;
 }
 
-// ============================================================
-// LOAD
-// ============================================================
 async function loadOptions() {
-  // Validadores: customer_id Asaas é "cus_..."; walletId é UUID
   const isCustomerId = (s) => /^cus_[A-Za-z0-9]+$/.test(s);
   const isWalletId   = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 
@@ -476,13 +535,12 @@ async function loadOptions() {
       fetchSheetColumn(CONFIG.CUSTOMERS_SHEET, CONFIG.CUSTOMERS_RANGE, isCustomerId),
       fetchSheetColumn(CONFIG.WALLETS_SHEET,   CONFIG.WALLETS_RANGE,   isWalletId)
     ]);
-    customers = cust;
-    wallets = wal;
+    customers = cust; wallets = wal;
     renderCustomerSelect();
     renderSplits();
     if (customers.length === 0) {
       showBanner("error", "Nenhum cliente carregado",
-        `A aba "${CONFIG.CUSTOMERS_SHEET}" (coluna ${CONFIG.CUSTOMERS_RANGE}) está vazia ou inacessível. Verifique o nome da aba e se a planilha está compartilhada como "qualquer pessoa com o link pode visualizar".`);
+        `A aba "${CONFIG.CUSTOMERS_SHEET}" (coluna ${CONFIG.CUSTOMERS_RANGE}) está vazia ou inacessível. Verifique se a planilha está compartilhada como "qualquer pessoa com o link pode visualizar".`);
     } else if (wallets.length === 0) {
       showBanner("error", "Nenhuma carteira carregada",
         `A aba "${CONFIG.WALLETS_SHEET}" (coluna ${CONFIG.WALLETS_RANGE}) está vazia ou inacessível.`);
@@ -512,11 +570,44 @@ function renderCustomerSelect() {
 }
 
 // ============================================================
+// SPLIT MATH
+// ============================================================
+function getTotalValue() { return parseNumber($("value").value); }
+
+function splitPercentage(row, totalValue) {
+  const n = parseNumber(row.input);
+  if (isNaN(n) || n <= 0) return 0;
+  if (row.mode === "percent") return n;
+  if (!totalValue || totalValue <= 0) return 0;
+  return (n / totalValue) * 100;
+}
+
+// ============================================================
 // RENDER · SPLITS
 // ============================================================
+function buildEquivalent(row, totalValue) {
+  const n = parseNumber(row.input);
+  if (isNaN(n) || n <= 0 || !row.walletId) return { text: "", err: false };
+
+  if (row.mode === "currency") {
+    if (!totalValue || totalValue <= 0) {
+      return { text: "Informe o valor total da cobrança para calcular a porcentagem.", err: true };
+    }
+    return { text: `Equivale a ${fmtPct((n / totalValue) * 100)} do valor total.`, err: false };
+  }
+  // percent mode
+  if (totalValue && totalValue > 0) {
+    return { text: `Equivale a ${fmtBRL(totalValue * n / 100)}.`, err: false };
+  }
+  return { text: "", err: false };
+}
+
 function renderSplits() {
   const list = $("splits-list");
-  if (splitRows.length === 0) splitRows.push({ id: uid(), walletId: "", percentualValue: "" });
+  if (splitRows.length === 0) {
+    splitRows.push({ id: uid(), walletId: "", mode: "percent", input: "" });
+  }
+  const totalValue = getTotalValue();
 
   list.innerHTML = splitRows.map((row, idx) => {
     const opts = wallets.map(w => {
@@ -524,43 +615,73 @@ function renderSplits() {
       return `<option value="${escapeAttr(w.id)}" ${row.walletId === w.id ? "selected" : ""}>${label}</option>`;
     }).join("");
     const canRemove = splitRows.length > 1;
+    const eq = buildEquivalent(row, totalValue);
+    const placeholder = row.mode === "percent" ? "0" : "0,00";
+
     return `
       <div class="split-row" data-id="${row.id}">
-        <div>
-          <label>Carteira ${idx + 1}</label>
-          <select data-field="walletId">
-            <option value="">Selecione…</option>
-            ${opts}
-          </select>
+        <div class="row-grid">
+          <div>
+            <label>Carteira ${idx + 1}</label>
+            <select data-field="walletId">
+              <option value="">Selecione…</option>
+              ${opts}
+            </select>
+          </div>
+          <div>
+            <label>Tipo</label>
+            <div class="mode-toggle" role="group" aria-label="Tipo de divisão">
+              <button type="button" class="mode-btn ${row.mode === 'percent' ? 'active' : ''}" data-mode="percent" aria-pressed="${row.mode === 'percent'}">%</button>
+              <button type="button" class="mode-btn ${row.mode === 'currency' ? 'active' : ''}" data-mode="currency" aria-pressed="${row.mode === 'currency'}">R$</button>
+            </div>
+          </div>
+          <div>
+            <label>${row.mode === "percent" ? "Percentual" : "Valor"}</label>
+            <input type="text" data-field="input" class="numeric"
+                   inputmode="decimal" placeholder="${placeholder}"
+                   value="${escapeAttr(row.input)}" />
+          </div>
+          <button type="button" class="remove-btn" data-action="remove"
+                  ${canRemove ? "" : "disabled"} aria-label="Remover">×</button>
         </div>
-        <div>
-          <label>Percentual %</label>
-          <input type="text" data-field="percentualValue" class="numeric"
-                 inputmode="decimal" placeholder="0"
-                 value="${escapeAttr(row.percentualValue)}" />
-        </div>
-        <button type="button" class="remove-btn" data-action="remove"
-                ${canRemove ? "" : "disabled"} aria-label="Remover">×</button>
+        ${eq.text ? `<div class="split-equiv${eq.err ? " error" : ""}">${escapeHtml(eq.text)}</div>` : ""}
       </div>`;
   }).join("");
 
   list.querySelectorAll(".split-row").forEach(el => {
     const id = el.dataset.id;
+
     el.querySelectorAll("[data-field]").forEach(input => {
       input.addEventListener("input", e => {
         const row = splitRows.find(r => r.id === id);
         if (!row) return;
         let v = e.target.value;
-        if (e.target.dataset.field === "percentualValue") {
-          v = v.replace(/,/g, ".").replace(/[^0-9.]/g, "");
-          const parts = v.split(".");
-          if (parts.length > 2) v = parts[0] + "." + parts.slice(1).join("");
+        if (e.target.dataset.field === "input") {
+          v = v.replace(/[^0-9.,]/g, "");
+          const m = v.match(/[.,]/);
+          if (m) {
+            const pos = v.indexOf(m[0]);
+            v = v.slice(0, pos + 1) + v.slice(pos + 1).replace(/[.,]/g, "");
+          }
           e.target.value = v;
         }
         row[e.target.dataset.field] = v;
+        updateRowEquivalent(id);
         updateSumIndicator();
       });
     });
+
+    el.querySelectorAll(".mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const row = splitRows.find(r => r.id === id);
+        if (!row) return;
+        if (row.mode === btn.dataset.mode) return;
+        row.mode = btn.dataset.mode;
+        row.input = "";
+        renderSplits();
+      });
+    });
+
     const removeBtn = el.querySelector("[data-action='remove']");
     if (removeBtn) {
       removeBtn.addEventListener("click", () => {
@@ -574,47 +695,144 @@ function renderSplits() {
   updateSumIndicator();
 }
 
+function updateRowEquivalent(rowId) {
+  const row = splitRows.find(r => r.id === rowId);
+  if (!row) return;
+  const el = document.querySelector(`.split-row[data-id="${rowId}"]`);
+  if (!el) return;
+  const eq = buildEquivalent(row, getTotalValue());
+
+  let existing = el.querySelector(".split-equiv");
+  if (eq.text) {
+    if (!existing) {
+      existing = document.createElement("div");
+      el.appendChild(existing);
+    }
+    existing.className = "split-equiv" + (eq.err ? " error" : "");
+    existing.textContent = eq.text;
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
 // ============================================================
-// SOMA · INDICADOR
+// SUM INDICATOR
 // ============================================================
 function updateSumIndicator() {
-  const sum = splitRows.reduce((acc, r) => acc + (parseFloat(r.percentualValue) || 0), 0);
-  const ind = $("sum-indicator");
-  $("sum-value").textContent = (Math.round(sum * 100) / 100) + "%";
-  ind.classList.remove("ok", "warn", "error");
-  if (sum > 100) ind.classList.add("error");
-  else if (Math.abs(sum - 100) < 0.001) ind.classList.add("ok");
-  else ind.classList.add("warn");
+  const totalValue = getTotalValue();
+  const splitsPctSum = splitRows.reduce((acc, r) => acc + splitPercentage(r, totalValue), 0);
+  const principalPct = 100 - splitsPctSum;
+
+  const pill = $("sum-pill");
+  const text = $("sum-text");
+  pill.classList.remove("ok", "warn", "error");
+
+  const overflow = splitsPctSum > 100 + 0.001;
+  const exact100 = Math.abs(splitsPctSum - 100) < 0.001;
+
+  if (overflow) pill.classList.add("error");
+  else if (exact100) pill.classList.add("ok");
+  else pill.classList.add("warn");
+
+  let principalStr, splitsStr;
+  if (sumDisplayMode === "currency" && totalValue && totalValue > 0) {
+    const splitsAmt = totalValue * splitsPctSum / 100;
+    const principalAmt = totalValue - splitsAmt;
+    principalStr = fmtBRL(principalAmt);
+    splitsStr    = fmtBRL(splitsAmt);
+  } else {
+    principalStr = fmtPct(principalPct);
+    splitsStr    = fmtPct(splitsPctSum);
+  }
+  text.innerHTML = `${escapeHtml(principalStr)} <span class="sep">/</span> ${escapeHtml(splitsStr)}`;
 
   document.querySelectorAll(".split-row").forEach(el => {
-    el.classList.toggle("invalid", sum > 100);
+    el.classList.toggle("invalid", overflow);
   });
+
+  // bloqueia/libera submit
+  const submitBtn = $("submit-btn");
+  const blockMsg = $("block-msg");
+  if (overflow) {
+    submitBtn.disabled = true;
+    blockMsg.classList.add("show");
+  } else {
+    submitBtn.disabled = false;
+    blockMsg.classList.remove("show");
+  }
 }
+
+$("sum-pill").addEventListener("click", () => {
+  const totalValue = getTotalValue();
+  if (sumDisplayMode === "percent") {
+    if (!totalValue || totalValue <= 0) {
+      // shake discreto pra avisar que não dá
+      const pill = $("sum-pill");
+      pill.style.transition = "transform 0.08s";
+      pill.style.transform = "translateX(-3px)";
+      setTimeout(() => { pill.style.transform = "translateX(3px)"; }, 80);
+      setTimeout(() => { pill.style.transform = ""; pill.style.transition = ""; }, 160);
+      return;
+    }
+    sumDisplayMode = "currency";
+  } else {
+    sumDisplayMode = "percent";
+  }
+  updateSumIndicator();
+});
+
+// ============================================================
+// CHARGE TYPE TOGGLE
+// ============================================================
+function setChargeType(type) {
+  chargeType = type;
+  document.querySelectorAll(".type-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.type === type);
+  });
+  $("section-1-title").textContent = type === "subscription" ? "01 · Dados da assinatura" : "01 · Dados da cobrança";
+  $("value-label").textContent = type === "subscription" ? "Valor da mensalidade" : "Valor total";
+  $("duedate-label").textContent = type === "subscription" ? "Próximo vencimento" : "Vencimento";
+  $("submit-btn").innerHTML = `<span class="btn-label">${type === "subscription" ? "Gerar assinatura" : "Gerar cobrança"}</span>`;
+
+  $("cycle-field").style.display = type === "subscription" ? "" : "none";
+  applyBillingTypeUI();
+
+  document.querySelector("h1.title").innerHTML = type === "subscription"
+    ? 'Nova <em>assinatura</em> com split'
+    : 'Nova cobrança <em>com split</em>';
+}
+
+function applyBillingTypeUI() {
+  const bt = $("billingType").value;
+  const showInstallments = chargeType === "payment" && (bt === "BOLETO" || bt === "CREDIT_CARD");
+  $("installments-field").style.display = showInstallments ? "" : "none";
+}
+
+document.querySelectorAll(".type-btn").forEach(btn => {
+  btn.addEventListener("click", () => setChargeType(btn.dataset.type));
+});
 
 // ============================================================
 // EVENT WIRING
 // ============================================================
-$("billingType").addEventListener("change", e => {
-  const v = e.target.value;
-  $("installments-field").style.display = (v === "BOLETO" || v === "CREDIT_CARD") ? "" : "none";
-});
+$("billingType").addEventListener("change", applyBillingTypeUI);
 
 $("add-split").addEventListener("click", () => {
   if (splitRows.length >= CONFIG.MAX_SPLITS) return;
-  splitRows.push({ id: uid(), walletId: "", percentualValue: "" });
+  splitRows.push({ id: uid(), walletId: "", mode: "percent", input: "" });
   renderSplits();
 });
 
 $("value").addEventListener("input", e => {
-  // aceita dígitos, vírgula e ponto; remove o resto
   let v = e.target.value.replace(/[^0-9.,]/g, "");
-  // mantém apenas o primeiro separador (vírgula ou ponto)
   const m = v.match(/[.,]/);
   if (m) {
     const idx = v.indexOf(m[0]);
     v = v.slice(0, idx + 1) + v.slice(idx + 1).replace(/[.,]/g, "");
   }
   e.target.value = v;
+  splitRows.forEach(r => updateRowEquivalent(r.id));
+  updateSumIndicator();
 });
 
 $("form").addEventListener("submit", handleSubmit);
@@ -626,109 +844,144 @@ async function handleSubmit(e) {
   e.preventDefault();
   hideBanner();
 
-  const customer_id      = $("customer_id")?.value || "";
-  const billingType      = $("billingType").value;
+  const customer_id = $("customer_id")?.value || "";
+  const billingType = $("billingType").value;
   const installmentCount = parseInt($("installmentCount").value || "1", 10);
-  const valueRaw         = $("value").value;
-  // Aceita vírgula ou ponto — o Asaas exige ponto, então normalizamos
-  const value            = parseFloat(valueRaw.replace(",", "."));
-  const dueDate          = $("dueDate").value;
-  const description      = $("description").value.trim();
+  const cycle = $("cycle").value;
+  const valueRaw = $("value").value;
+  const value = parseNumber(valueRaw);
+  const dueDate = $("dueDate").value;
+  const description = $("description").value.trim();
 
+  // ===== validações =====
   const errors = [];
   if (!customer_id) errors.push("Selecione um cliente.");
   if (!billingType) errors.push("Selecione a forma de pagamento.");
-  if (!valueRaw || isNaN(value) || value <= 0) errors.push("Informe um valor válido (ex: 199.90).");
+  if (!valueRaw || isNaN(value) || value <= 0) errors.push("Informe um valor válido.");
   if (!dueDate) errors.push("Informe a data de vencimento.");
+  if (chargeType === "subscription" && !cycle) errors.push("Selecione o ciclo da assinatura.");
 
-  const cleanSplits = splitRows
-    .filter(r => r.walletId && parseFloat(r.percentualValue) > 0)
-    .map(r => ({
-      walletId: r.walletId,
-      percentualValue: parseFloat(parseFloat(r.percentualValue).toFixed(4))
-    }));
+  // splits: sempre como % com 2 casas
+  const cleanSplits = [];
+  let splitInputError = false;
+  for (const r of splitRows) {
+    if (!r.walletId) continue;
+    const n = parseNumber(r.input);
+    if (isNaN(n) || n <= 0) continue;
 
-  if (cleanSplits.length === 0) errors.push("Adicione ao menos uma carteira com percentual maior que 0.");
-  const sum = cleanSplits.reduce((a, b) => a + b.percentualValue, 0);
-  if (sum > 100) errors.push(`A soma dos percentuais ultrapassa 100% (atual: ${sum}%).`);
+    let pct;
+    if (r.mode === "percent") {
+      pct = n;
+    } else {
+      if (!value || value <= 0) {
+        if (!splitInputError) {
+          errors.push("Para usar split em R$, informe primeiro o valor total.");
+          splitInputError = true;
+        }
+        continue;
+      }
+      pct = (n / value) * 100;
+    }
+    cleanSplits.push({ walletId: r.walletId, percentualValue: round2(pct) });
+  }
+
+  if (cleanSplits.length === 0 && !splitInputError) {
+    errors.push("Adicione ao menos uma carteira com valor maior que zero.");
+  }
+
+  const sumPct = cleanSplits.reduce((a, s) => a + s.percentualValue, 0);
+  if (sumPct > 100 + 0.001) errors.push(`A soma dos splits ultrapassa 100% (atual: ${round2(sumPct)}%).`);
 
   const dupSet = new Set();
   for (const s of cleanSplits) {
-    if (dupSet.has(s.walletId)) { errors.push("Carteira duplicada — cada walletId deve aparecer só uma vez."); break; }
+    if (dupSet.has(s.walletId)) {
+      errors.push("Carteira duplicada — cada carteira pode aparecer só uma vez no split.");
+      break;
+    }
     dupSet.add(s.walletId);
   }
 
   if (errors.length) {
     showBanner("error", "Verifique o formulário", errors.map(e => "• " + e).join("\n"));
-    window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
 
-  // Payload pro n8n — mapeado nos nomes que o Asaas usa
-  const payload = {
-    customer:    customer_id,         // Asaas: customer
-    billingType: billingType,
-    value:       value,
-    dueDate:     dueDate,             // YYYY-MM-DD
-    description: description || null,
-    splits:      cleanSplits          // [{ walletId, percentualValue }]
-  };
-  if ((billingType === "BOLETO" || billingType === "CREDIT_CARD") && installmentCount > 1) {
-    payload.installmentCount = installmentCount;
-    payload.totalValue = value;       // Asaas: para parcelado, valor total vai em totalValue
+  // ===== payload =====
+  let payload;
+  if (chargeType === "subscription") {
+    payload = {
+      type: "subscription",
+      customer:    customer_id,
+      billingType: billingType,
+      value:       round2(value),
+      nextDueDate: dueDate,
+      cycle:       cycle,
+      description: description || null,
+      splits:      cleanSplits
+    };
+  } else {
+    payload = {
+      type: "payment",
+      customer:    customer_id,
+      billingType: billingType,
+      value:       round2(value),
+      dueDate:     dueDate,
+      description: description || null,
+      splits:      cleanSplits
+    };
+    if ((billingType === "BOLETO" || billingType === "CREDIT_CARD") && installmentCount > 1) {
+      payload.installmentCount = installmentCount;
+      payload.totalValue = round2(value);
+    }
   }
 
+  // ===== envio =====
   setSubmitting(true);
   try {
-    // text/plain evita preflight CORS; n8n aceita JSON mesmo assim
     const res = await fetch(CONFIG.WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
-    const txt = await res.text();
-    let data = null;
-    try { data = txt ? JSON.parse(txt) : null; } catch (_) { /* resposta não-JSON, tudo bem */ }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}${txt ? " — " + txt.slice(0, 200) : ""}`);
-
-    const link = data?.invoiceUrl || data?.bankSlipUrl || data?.paymentLink || "";
-    const id   = data?.id || data?.paymentId || "";
-    showBanner("success", "Cobrança enviada com sucesso",
-      [
-        id   ? `ID: ${id}` : "",
-        link ? `Link: ${link}` : "",
-        !id && !link ? "Os dados foram entregues ao n8n para processamento." : ""
-      ].filter(Boolean).join("\n")
-    );
-
-    $("form").reset();
-    splitRows = [];
-    renderSplits();
-    $("installments-field").style.display = "none";
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    showBanner("success",
+      chargeType === "subscription" ? "Assinatura solicitada com sucesso" : "Cobrança solicitada com sucesso",
+      "Tudo certo. Você já pode preencher uma nova solicitação quando quiser.");
+    resetForm();
   } catch (err) {
     console.error(err);
-    showBanner("error", "Erro ao enviar para o n8n", err.message);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    showBanner("error",
+      "Não foi possível concluir a solicitação",
+      "Algo não funcionou agora. Entre em contato com a DTM para verificarmos o projeto.");
   } finally {
     setSubmitting(false);
   }
 }
 
 // ============================================================
-// BOOT
+// RESET / BOOT
 // ============================================================
-loadOptions();
+function resetForm() {
+  $("form").reset();
+  splitRows = [];
+  sumDisplayMode = "percent";
+  renderSplits();
+  applyBillingTypeUI();
+  setDefaultDate();
+}
 
-// Vencimento default = amanhã
-(function setDefaultDate() {
+function setDefaultDate() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   const iso = d.toISOString().slice(0, 10);
   $("dueDate").value = iso;
   $("dueDate").min = new Date().toISOString().slice(0, 10);
-})();
+}
+
+loadOptions();
+setDefaultDate();
+setChargeType("payment");
 </script>
 </body>
 </html>
