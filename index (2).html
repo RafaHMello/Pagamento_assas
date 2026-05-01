@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nova Cobrança · Split Asaas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F4EE;
+    --surface: #FFFFFF;
+    --surface-alt: #FAF9F3;
+    --ink: #0F0F0E;
+    --ink-soft: #57564F;
+    --ink-mute: #8E8C82;
+    --line: #E5E3DA;
+    --line-strong: #C9C6B8;
+    --accent-soft: #1B1B19;
+    --success: #1F6B3A;
+    --success-bg: #E8F2EC;
+    --error: #B84033;
+    --error-bg: #F8E8E5;
+    --warn: #8A6A1A;
+    --warn-bg: #F6EFD8;
+    --radius: 8px;
+    --radius-lg: 14px;
+    --shadow-md: 0 4px 16px -4px rgba(15,15,14,0.08), 0 1px 2px rgba(15,15,14,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(15,15,14,0.025) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(15,15,14,0.02) 0%, transparent 35%);
+  }
+  .page { max-width: 680px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--ink-soft);
+    margin-bottom: 32px; letter-spacing: 0.01em;
+  }
+  .brand-mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--ink); display: grid; place-items: center;
+    color: #fff; font-weight: 600; font-size: 12px;
+    font-family: 'Geist Mono', monospace;
+  }
+
+  h1.title {
+    font-family: 'Bricolage Grotesque', serif;
+    font-weight: 500;
+    font-size: clamp(32px, 5vw, 44px);
+    line-height: 1.05; letter-spacing: -0.02em;
+    margin: 0 0 12px; color: var(--ink);
+  }
+  .title em { font-style: italic; font-weight: 400; color: var(--ink-soft); }
+  .subtitle { font-size: 15px; color: var(--ink-soft); margin: 0 0 32px; max-width: 52ch; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .section { padding: 28px 32px; border-bottom: 1px solid var(--line); }
+  .section:last-of-type { border-bottom: none; }
+
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+  }
+  .section-title {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px; font-weight: 500;
+    color: var(--ink-mute);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    margin: 0;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+
+  label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--ink); margin-bottom: 6px;
+  }
+  label .req { color: var(--error); margin-left: 2px; }
+  label .hint { font-weight: 400; color: var(--ink-mute); font-size: 12px; margin-left: 6px; }
+
+  input[type="text"], input[type="number"], input[type="date"], textarea, select {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--line-strong); border-radius: var(--radius);
+    background: #FDFDFB;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    appearance: none; -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: var(--ink); background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(15,15,14,0.08);
+  }
+  input::placeholder, textarea::placeholder { color: var(--ink-mute); }
+  input.numeric { font-variant-numeric: tabular-nums; }
+
+  select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%2357564F' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+    padding-right: 36px; cursor: pointer;
+  }
+  select:disabled { background-color: #F0EFE8; cursor: not-allowed; color: var(--ink-mute); }
+  textarea { min-height: 70px; resize: vertical; font-family: inherit; }
+
+  .input-prefix { position: relative; }
+  .input-prefix input { padding-left: 38px; }
+  .input-prefix .prefix {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-family: 'Geist Mono', monospace; font-size: 13px;
+    color: var(--ink-mute); pointer-events: none;
+  }
+
+  .splits-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+  .split-row {
+    display: grid; grid-template-columns: 1fr 130px 36px;
+    gap: 10px; align-items: end;
+    padding: 14px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface-alt);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .split-row.invalid { border-color: var(--error); background: var(--error-bg); }
+  .split-row label {
+    font-size: 11px; font-family: 'Geist Mono', monospace;
+    color: var(--ink-mute); text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 500;
+  }
+  .remove-btn {
+    height: 38px; width: 36px;
+    border: 1px solid var(--line-strong); background: var(--surface);
+    border-radius: var(--radius); cursor: pointer; color: var(--ink-soft);
+    display: grid; place-items: center;
+    transition: all 0.15s; font-size: 18px;
+  }
+  .remove-btn:hover:not(:disabled) {
+    border-color: var(--error); color: var(--error); background: var(--error-bg);
+  }
+  .remove-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .add-split-btn {
+    width: 100%; padding: 11px;
+    border: 1px dashed var(--line-strong); background: transparent;
+    border-radius: var(--radius); color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-split-btn:hover:not(:disabled) {
+    border-color: var(--ink); color: var(--ink); background: var(--surface);
+  }
+  .add-split-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .sum-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 6px;
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.2s;
+  }
+  .sum-indicator.ok { background: var(--success-bg); color: var(--success); }
+  .sum-indicator.warn { background: var(--warn-bg); color: var(--warn); }
+  .sum-indicator.error { background: var(--error-bg); color: var(--error); }
+  .sum-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .actions {
+    padding: 24px 32px; background: var(--surface-alt);
+    border-top: 1px solid var(--line);
+  }
+  .submit-btn {
+    width: 100%; padding: 14px 20px;
+    background: var(--ink); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: inherit; font-size: 15px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 10px; transition: background 0.15s, transform 0.1s;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--accent-soft); }
+  .submit-btn:active:not(:disabled) { transform: translateY(1px); }
+  .submit-btn:disabled {
+    background: var(--line-strong); color: var(--ink-mute); cursor: not-allowed;
+  }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-state {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    border: 1px dashed var(--line-strong); border-radius: var(--radius);
+    color: var(--ink-mute); font-size: 13px; background: #FDFDFB;
+  }
+  .loading-state .spinner {
+    width: 12px; height: 12px;
+    border-color: var(--line-strong); border-top-color: var(--ink-soft);
+  }
+
+  .banner {
+    margin-bottom: 24px; padding: 14px 16px;
+    border-radius: var(--radius); border: 1px solid;
+    display: none; font-size: 14px; white-space: pre-line;
+  }
+  .banner.show { display: block; animation: slideIn 0.25s ease-out; }
+  .banner.success { background: var(--success-bg); border-color: rgba(31,107,58,0.25); color: var(--success); }
+  .banner.error   { background: var(--error-bg);   border-color: rgba(184,64,51,0.25);  color: var(--error); }
+  .banner strong  { display: block; margin-bottom: 4px; font-weight: 600; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card .section, .card .actions { opacity: 0; animation: fadeUp 0.4s ease-out forwards; }
+  .card .section:nth-child(1) { animation-delay: 0.05s; }
+  .card .section:nth-child(2) { animation-delay: 0.10s; }
+  .card .actions { animation-delay: 0.15s; }
+  .title, .subtitle, .brand { opacity: 0; animation: fadeUp 0.4s ease-out forwards; }
+  .brand { animation-delay: 0s; }
+  .title { animation-delay: 0.05s; }
+  .subtitle { animation-delay: 0.1s; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 540px) {
+    .page { padding: 24px 16px 64px; }
+    .section { padding: 22px 20px; }
+    .actions { padding: 18px 20px; }
+    .field-row { grid-template-columns: 1fr; gap: 18px; }
+    .split-row { grid-template-columns: 1fr 100px 32px; gap: 8px; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="brand">
+    <span class="brand-mark">A</span>
+    <span>Cobranças · Asaas</span>
+  </div>
+
+  <h1 class="title">Nova cobrança <em>com split</em></h1>
+  <p class="subtitle">Preencha os dados e enviamos para processamento. A cobrança será gerada no Asaas com a divisão configurada.</p>
+
+  <div id="banner" class="banner" role="status"></div>
+
+  <form id="form" class="card" novalidate>
+
+    <!-- ========== 01 · DADOS DA COBRANÇA ========== -->
+    <div class="section">
+      <div class="section-head">
+        <h2 class="section-title">01 · Dados da cobrança</h2>
+      </div>
+
+      <div class="field">
+        <label for="customer_id">Cliente <span class="req">*</span></label>
+        <div id="customer-wrap">
+          <div class="loading-state"><div class="spinner"></div> Carregando clientes da planilha…</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="billingType">Forma de pagamento <span class="req">*</span></label>
+          <select id="billingType" name="billingType" required>
+            <option value="">Selecione…</option>
+            <option value="BOLETO">Boleto</option>
+            <option value="CREDIT_CARD">Cartão de crédito</option>
+            <option value="PIX">PIX</option>
+          </select>
+        </div>
+
+        <div class="field" id="installments-field" style="display:none;">
+          <label for="installmentCount">Parcelas <span class="hint">(boleto / cartão)</span></label>
+          <select id="installmentCount" name="installmentCount">
+            <option value="1">1x (à vista)</option>
+            <option value="2">2x</option><option value="3">3x</option>
+            <option value="4">4x</option><option value="5">5x</option>
+            <option value="6">6x</option><option value="7">7x</option>
+            <option value="8">8x</option><option value="9">9x</option>
+            <option value="10">10x</option><option value="11">11x</option>
+            <option value="12">12x</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="value">Valor total <span class="req">*</span></label>
+          <div class="input-prefix">
+            <span class="prefix">R$</span>
+            <input type="text" id="value" name="value" class="numeric"
+              inputmode="decimal" placeholder="0.00" required autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dueDate">Vencimento <span class="req">*</span></label>
+          <input type="date" id="dueDate" name="dueDate" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="description">Descrição</label>
+        <textarea id="description" name="description" maxlength="500"
+          placeholder="Ex.: Mensalidade — Plano Pró — Maio/2026"></textarea>
+      </div>
+    </div>
+
+    <!-- ========== 02 · SPLIT ========== -->
+    <div class="section">
+      <div class="section-head">
+        <h2 class="section-title">02 · Divisão (split)</h2>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--ink-soft);">
+          Soma:
+          <span id="sum-indicator" class="sum-indicator warn">
+            <span class="dot"></span><span id="sum-value">0%</span>
+          </span>
+        </span>
+      </div>
+
+      <div id="splits-list" class="splits-list"></div>
+
+      <button type="button" id="add-split" class="add-split-btn">+ Adicionar carteira</button>
+    </div>
+
+    <div class="actions">
+      <button type="submit" id="submit-btn" class="submit-btn">
+        <span class="btn-label">Gerar cobrança</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAÇÃO  (edite aqui)
+// ============================================================
+const CONFIG = {
+  // Webhook do n8n que recebe os dados do form (POST)
+  WEBHOOK_URL: "https://n8n.dreamcommerce.com.br/webhook/067abb3a-5d5c-4e22-8393-42b4bb2503bd",
+
+  // ID da planilha (entre /d/ e /edit na URL)
+  SHEET_ID: "1i5QfaJhw7CbJk47HUgSOr7Ff5kHfIkyJhUHk0_-KqIk",
+
+  // Aba e coluna onde estão os customer_id (Asaas)
+  CUSTOMERS_SHEET: "Clientes",
+  CUSTOMERS_RANGE: "D:D",
+
+  // Aba e coluna onde estão os walletId (Asaas)
+  WALLETS_SHEET: "Carteiras para Splits",
+  WALLETS_RANGE: "A:A",
+
+  MAX_SPLITS: 5
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let customers = [];
+let wallets = [];
+let splitRows = [];
+
+// ============================================================
+// HELPERS
+// ============================================================
+const $ = (id) => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const escapeHtml = (s) => String(s ?? "")
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const escapeAttr = escapeHtml;
+
+function showBanner(type, title, message) {
+  const b = $("banner");
+  b.className = "banner show " + type;
+  b.innerHTML = `<strong>${escapeHtml(title)}</strong>${escapeHtml(message || "")}`;
+}
+function hideBanner() {
+  $("banner").className = "banner";
+}
+function setSubmitting(on) {
+  const btn = $("submit-btn");
+  btn.disabled = on;
+  btn.innerHTML = on
+    ? '<div class="spinner"></div><span>Enviando…</span>'
+    : '<span class="btn-label">Gerar cobrança</span>';
+}
+
+// ============================================================
+// CSV PARSING (Google Sheets gviz endpoint)
+// ============================================================
+// Parser tolerante a aspas e vírgulas dentro de valores
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cur = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i+1] === '"') { cur += '"'; i++; }
+        else { inQuotes = false; }
+      } else { cur += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(cur); cur = ""; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if (c === '\r') { /* skip */ }
+      else { cur += c; }
+    }
+  }
+  if (cur.length || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+// Lê uma coluna de uma aba do Sheets via gviz.
+// idValidator é um regex/função que reconhece um ID válido — usado pra
+// detectar se a primeira linha é cabeçalho (e pular) ou já é dado.
+async function fetchSheetColumn(sheetName, range, idValidator) {
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq`
+            + `?tqx=out:csv`
+            + `&sheet=${encodeURIComponent(sheetName)}`
+            + `&range=${encodeURIComponent(range)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Sheets HTTP ${res.status} (aba "${sheetName}")`);
+  const text = await res.text();
+
+  const rows = parseCSV(text);
+  const values = rows
+    .map(r => String(r[0] ?? "").trim())
+    .filter(v => v.length > 0);
+
+  // Se o 1º valor não passa no validador, é cabeçalho — descarta
+  if (values.length && idValidator && !idValidator(values[0])) {
+    values.shift();
+  }
+  // Dedup mantendo ordem
+  const seen = new Set();
+  const out = [];
+  for (const id of values) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, name: "" });
+  }
+  return out;
+}
+
+// ============================================================
+// LOAD
+// ============================================================
+async function loadOptions() {
+  // Validadores: customer_id Asaas é "cus_..."; walletId é UUID
+  const isCustomerId = (s) => /^cus_[A-Za-z0-9]+$/.test(s);
+  const isWalletId   = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+  try {
+    const [cust, wal] = await Promise.all([
+      fetchSheetColumn(CONFIG.CUSTOMERS_SHEET, CONFIG.CUSTOMERS_RANGE, isCustomerId),
+      fetchSheetColumn(CONFIG.WALLETS_SHEET,   CONFIG.WALLETS_RANGE,   isWalletId)
+    ]);
+    customers = cust;
+    wallets = wal;
+    renderCustomerSelect();
+    renderSplits();
+    if (customers.length === 0) {
+      showBanner("error", "Nenhum cliente carregado",
+        `A aba "${CONFIG.CUSTOMERS_SHEET}" (coluna ${CONFIG.CUSTOMERS_RANGE}) está vazia ou inacessível. Verifique o nome da aba e se a planilha está compartilhada como "qualquer pessoa com o link pode visualizar".`);
+    } else if (wallets.length === 0) {
+      showBanner("error", "Nenhuma carteira carregada",
+        `A aba "${CONFIG.WALLETS_SHEET}" (coluna ${CONFIG.WALLETS_RANGE}) está vazia ou inacessível.`);
+    }
+  } catch (err) {
+    console.error(err);
+    showBanner("error", "Erro ao carregar dados da planilha",
+      err.message + ". Confira se a planilha está compartilhada como 'qualquer pessoa com o link pode visualizar' e se os nomes das abas estão corretos.");
+    $("customer-wrap").innerHTML =
+      '<div class="loading-state" style="color:var(--error)">Falha ao carregar — recarregue a página</div>';
+  }
+}
+
+// ============================================================
+// RENDER · CLIENTE
+// ============================================================
+function renderCustomerSelect() {
+  const opts = customers.map(c => {
+    const label = c.name ? `${escapeHtml(c.name)} — ${escapeHtml(c.id)}` : escapeHtml(c.id);
+    return `<option value="${escapeAttr(c.id)}">${label}</option>`;
+  }).join("");
+  $("customer-wrap").innerHTML = `
+    <select id="customer_id" name="customer_id" required>
+      <option value="">Selecione um cliente…</option>
+      ${opts}
+    </select>`;
+}
+
+// ============================================================
+// RENDER · SPLITS
+// ============================================================
+function renderSplits() {
+  const list = $("splits-list");
+  if (splitRows.length === 0) splitRows.push({ id: uid(), walletId: "", percentualValue: "" });
+
+  list.innerHTML = splitRows.map((row, idx) => {
+    const opts = wallets.map(w => {
+      const label = w.name ? `${escapeHtml(w.name)} — ${escapeHtml(w.id)}` : escapeHtml(w.id);
+      return `<option value="${escapeAttr(w.id)}" ${row.walletId === w.id ? "selected" : ""}>${label}</option>`;
+    }).join("");
+    const canRemove = splitRows.length > 1;
+    return `
+      <div class="split-row" data-id="${row.id}">
+        <div>
+          <label>Carteira ${idx + 1}</label>
+          <select data-field="walletId">
+            <option value="">Selecione…</option>
+            ${opts}
+          </select>
+        </div>
+        <div>
+          <label>Percentual %</label>
+          <input type="text" data-field="percentualValue" class="numeric"
+                 inputmode="decimal" placeholder="0"
+                 value="${escapeAttr(row.percentualValue)}" />
+        </div>
+        <button type="button" class="remove-btn" data-action="remove"
+                ${canRemove ? "" : "disabled"} aria-label="Remover">×</button>
+      </div>`;
+  }).join("");
+
+  list.querySelectorAll(".split-row").forEach(el => {
+    const id = el.dataset.id;
+    el.querySelectorAll("[data-field]").forEach(input => {
+      input.addEventListener("input", e => {
+        const row = splitRows.find(r => r.id === id);
+        if (!row) return;
+        let v = e.target.value;
+        if (e.target.dataset.field === "percentualValue") {
+          v = v.replace(/,/g, ".").replace(/[^0-9.]/g, "");
+          const parts = v.split(".");
+          if (parts.length > 2) v = parts[0] + "." + parts.slice(1).join("");
+          e.target.value = v;
+        }
+        row[e.target.dataset.field] = v;
+        updateSumIndicator();
+      });
+    });
+    const removeBtn = el.querySelector("[data-action='remove']");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", () => {
+        splitRows = splitRows.filter(r => r.id !== id);
+        renderSplits();
+      });
+    }
+  });
+
+  $("add-split").disabled = splitRows.length >= CONFIG.MAX_SPLITS;
+  updateSumIndicator();
+}
+
+// ============================================================
+// SOMA · INDICADOR
+// ============================================================
+function updateSumIndicator() {
+  const sum = splitRows.reduce((acc, r) => acc + (parseFloat(r.percentualValue) || 0), 0);
+  const ind = $("sum-indicator");
+  $("sum-value").textContent = (Math.round(sum * 100) / 100) + "%";
+  ind.classList.remove("ok", "warn", "error");
+  if (sum > 100) ind.classList.add("error");
+  else if (Math.abs(sum - 100) < 0.001) ind.classList.add("ok");
+  else ind.classList.add("warn");
+
+  document.querySelectorAll(".split-row").forEach(el => {
+    el.classList.toggle("invalid", sum > 100);
+  });
+}
+
+// ============================================================
+// EVENT WIRING
+// ============================================================
+$("billingType").addEventListener("change", e => {
+  const v = e.target.value;
+  $("installments-field").style.display = (v === "BOLETO" || v === "CREDIT_CARD") ? "" : "none";
+});
+
+$("add-split").addEventListener("click", () => {
+  if (splitRows.length >= CONFIG.MAX_SPLITS) return;
+  splitRows.push({ id: uid(), walletId: "", percentualValue: "" });
+  renderSplits();
+});
+
+$("value").addEventListener("input", e => {
+  // aceita dígitos, vírgula e ponto; remove o resto
+  let v = e.target.value.replace(/[^0-9.,]/g, "");
+  // mantém apenas o primeiro separador (vírgula ou ponto)
+  const m = v.match(/[.,]/);
+  if (m) {
+    const idx = v.indexOf(m[0]);
+    v = v.slice(0, idx + 1) + v.slice(idx + 1).replace(/[.,]/g, "");
+  }
+  e.target.value = v;
+});
+
+$("form").addEventListener("submit", handleSubmit);
+
+// ============================================================
+// SUBMIT
+// ============================================================
+async function handleSubmit(e) {
+  e.preventDefault();
+  hideBanner();
+
+  const customer_id      = $("customer_id")?.value || "";
+  const billingType      = $("billingType").value;
+  const installmentCount = parseInt($("installmentCount").value || "1", 10);
+  const valueRaw         = $("value").value;
+  // Aceita vírgula ou ponto — o Asaas exige ponto, então normalizamos
+  const value            = parseFloat(valueRaw.replace(",", "."));
+  const dueDate          = $("dueDate").value;
+  const description      = $("description").value.trim();
+
+  const errors = [];
+  if (!customer_id) errors.push("Selecione um cliente.");
+  if (!billingType) errors.push("Selecione a forma de pagamento.");
+  if (!valueRaw || isNaN(value) || value <= 0) errors.push("Informe um valor válido (ex: 199.90).");
+  if (!dueDate) errors.push("Informe a data de vencimento.");
+
+  const cleanSplits = splitRows
+    .filter(r => r.walletId && parseFloat(r.percentualValue) > 0)
+    .map(r => ({
+      walletId: r.walletId,
+      percentualValue: parseFloat(parseFloat(r.percentualValue).toFixed(4))
+    }));
+
+  if (cleanSplits.length === 0) errors.push("Adicione ao menos uma carteira com percentual maior que 0.");
+  const sum = cleanSplits.reduce((a, b) => a + b.percentualValue, 0);
+  if (sum > 100) errors.push(`A soma dos percentuais ultrapassa 100% (atual: ${sum}%).`);
+
+  const dupSet = new Set();
+  for (const s of cleanSplits) {
+    if (dupSet.has(s.walletId)) { errors.push("Carteira duplicada — cada walletId deve aparecer só uma vez."); break; }
+    dupSet.add(s.walletId);
+  }
+
+  if (errors.length) {
+    showBanner("error", "Verifique o formulário", errors.map(e => "• " + e).join("\n"));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  // Payload pro n8n — mapeado nos nomes que o Asaas usa
+  const payload = {
+    customer:    customer_id,         // Asaas: customer
+    billingType: billingType,
+    value:       value,
+    dueDate:     dueDate,             // YYYY-MM-DD
+    description: description || null,
+    splits:      cleanSplits          // [{ walletId, percentualValue }]
+  };
+  if ((billingType === "BOLETO" || billingType === "CREDIT_CARD") && installmentCount > 1) {
+    payload.installmentCount = installmentCount;
+    payload.totalValue = value;       // Asaas: para parcelado, valor total vai em totalValue
+  }
+
+  setSubmitting(true);
+  try {
+    // text/plain evita preflight CORS; n8n aceita JSON mesmo assim
+    const res = await fetch(CONFIG.WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const txt = await res.text();
+    let data = null;
+    try { data = txt ? JSON.parse(txt) : null; } catch (_) { /* resposta não-JSON, tudo bem */ }
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}${txt ? " — " + txt.slice(0, 200) : ""}`);
+
+    const link = data?.invoiceUrl || data?.bankSlipUrl || data?.paymentLink || "";
+    const id   = data?.id || data?.paymentId || "";
+    showBanner("success", "Cobrança enviada com sucesso",
+      [
+        id   ? `ID: ${id}` : "",
+        link ? `Link: ${link}` : "",
+        !id && !link ? "Os dados foram entregues ao n8n para processamento." : ""
+      ].filter(Boolean).join("\n")
+    );
+
+    $("form").reset();
+    splitRows = [];
+    renderSplits();
+    $("installments-field").style.display = "none";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) {
+    console.error(err);
+    showBanner("error", "Erro ao enviar para o n8n", err.message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } finally {
+    setSubmitting(false);
+  }
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+loadOptions();
+
+// Vencimento default = amanhã
+(function setDefaultDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const iso = d.toISOString().slice(0, 10);
+  $("dueDate").value = iso;
+  $("dueDate").min = new Date().toISOString().slice(0, 10);
+})();
+</script>
+</body>
+</html>
