@@ -1024,13 +1024,18 @@ async function handleSubmit(e) {
     let paymentLink = "";
     try {
       const txt = await res.text();
+      console.log("[LP Asaas] Response bruta do webhook:", txt);
       if (txt) {
         const data = JSON.parse(txt);
+        console.log("[LP Asaas] Response parseada:", data);
         const node = Array.isArray(data) ? data[0] : data;
         paymentLink = node?.link_pagamento || node?.linkPagamento ||
                       node?.invoiceUrl || node?.bankSlipUrl || "";
       }
-    } catch (_) { /* resposta sem JSON, segue sem link */ }
+    } catch (parseErr) {
+      console.warn("[LP Asaas] Resposta não é JSON válido:", parseErr);
+    }
+    console.log("[LP Asaas] Link extraído:", paymentLink || "(nenhum)");
 
     showBanner("success",
       chargeType === "subscription" ? "Assinatura solicitada com sucesso" : "Cobrança solicitada com sucesso",
