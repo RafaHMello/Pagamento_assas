@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Nova Cobrança · Split Asaas</title>
+
+<!-- Favicon (DTM) -->
+<link rel="icon" type="image/x-icon" href="favicon.ico" />
+<link rel="icon" type="image/png" sizes="256x256" href="favicon.png" />
+<link rel="apple-touch-icon" href="favicon.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -47,10 +53,14 @@
     margin-bottom: 32px; letter-spacing: 0.01em;
   }
   .brand-mark {
-    width: 22px; height: 22px; border-radius: 6px;
+    width: 32px; height: 32px; border-radius: 8px;
     background: var(--ink); display: grid; place-items: center;
-    color: #fff; font-weight: 600; font-size: 12px;
-    font-family: 'Geist Mono', monospace;
+    overflow: hidden; flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(15,15,14,0.12);
+  }
+  .brand-mark img {
+    width: 100%; height: 100%; object-fit: contain;
+    display: block; padding: 2px;
   }
 
   h1.title {
@@ -323,6 +333,127 @@
   .type-toggle { animation-delay: 0.12s; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
+  /* Toggle de modo do campo cliente */
+  .customer-mode-toggle {
+    display: inline-flex;
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 3px;
+    margin-bottom: 8px;
+  }
+  .customer-mode-btn {
+    padding: 5px 12px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .customer-mode-btn.active {
+    background: var(--ink);
+    color: #fff;
+  }
+  .customer-mode-btn:hover:not(.active) { color: var(--ink); }
+
+  /* Feedback do ID extraído */
+  .url-feedback {
+    margin-top: 8px;
+    font-size: 12px;
+    font-family: 'Geist Mono', monospace;
+    color: var(--ink-mute);
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .url-feedback.ok { color: var(--success); }
+  .url-feedback.error { color: var(--error); }
+  .url-feedback .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .url-feedback.ok .badge {
+    background: var(--success-bg);
+    border: 1px solid rgba(31,107,58,0.2);
+  }
+  .url-feedback.error .badge {
+    background: var(--error-bg);
+    border: 1px solid rgba(184,64,51,0.2);
+  }
+
+  .asaas-helper-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .asaas-helper-link:hover { color: var(--ink); text-decoration: underline; }
+
+  /* Footer com link CRM University */
+  .page-footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-mute);
+    opacity: 0;
+    animation: fadeUp 0.4s ease-out 0.2s forwards;
+  }
+  .page-footer a.footer-main-link {
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .page-footer a.footer-main-link:hover { color: var(--ink); }
+  .page-footer a.footer-main-link::after {
+    content: "→";
+    font-family: 'Geist Mono', monospace;
+    transition: transform 0.15s;
+  }
+  .page-footer a.footer-main-link:hover::after { transform: translateX(2px); }
+
+  .footer-social {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .footer-social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    color: var(--ink-mute);
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .footer-social a:hover {
+    color: var(--ink);
+    background: var(--surface);
+    border-color: var(--line);
+  }
+  .footer-social svg { width: 18px; height: 18px; display: block; }
+
   @media (max-width: 540px) {
     .page { padding: 24px 16px 64px; }
     .section { padding: 22px 20px; }
@@ -336,7 +467,7 @@
 <div class="page">
 
   <div class="brand">
-    <span class="brand-mark">A</span>
+    <span class="brand-mark"><img src="logo-dtm.png" alt="DTM · O seu HUB de CRM" /></span>
     <span>Cobranças · Asaas</span>
   </div>
 
@@ -360,8 +491,27 @@
 
       <div class="field">
         <label for="customer_id">Cliente <span class="req">*</span></label>
+
+        <div class="customer-mode-toggle" role="group" aria-label="Modo de seleção de cliente">
+          <button type="button" class="customer-mode-btn active" data-mode="list">Da planilha</button>
+          <button type="button" class="customer-mode-btn" data-mode="url">Colar URL do Asaas</button>
+        </div>
+
+        <!-- Modo: lista da planilha -->
         <div id="customer-wrap">
           <div class="loading-state"><div class="spinner"></div> Carregando clientes da planilha…</div>
+        </div>
+
+        <!-- Modo: colar URL -->
+        <div id="customer-url-wrap" style="display:none;">
+          <input type="text" id="customer_url" autocomplete="off"
+                 placeholder="https://www.asaas.com/customerAccount/show/123456789" />
+          <div id="customer-url-feedback" class="url-feedback">
+            Cole a URL completa do contato ou apenas o ID numérico.
+          </div>
+          <a href="https://www.asaas.com/" target="_blank" rel="noopener" class="asaas-helper-link">
+            Abrir painel do Asaas para criar cliente →
+          </a>
         </div>
       </div>
 
@@ -452,6 +602,27 @@
     </div>
 
   </form>
+
+  <footer class="page-footer">
+    <a href="https://dtmcrm.com.br/?utm_source=payment_assas" target="_blank" rel="noopener" class="footer-main-link">
+      DTM · CRM University
+    </a>
+    <div class="footer-social">
+      <a href="https://www.instagram.com/gabrielahomemmello/" target="_blank" rel="noopener" aria-label="Instagram de Gabriela Homem Mello" title="Instagram">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect width="18" height="18" x="3" y="3" rx="5" ry="5"/>
+          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+        </svg>
+      </a>
+      <a href="https://www.youtube.com/@gabrielahomemmello" target="_blank" rel="noopener" aria-label="YouTube de Gabriela Homem Mello" title="YouTube">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+          <path d="m10 15 5-3-5-3z" fill="currentColor" stroke="none"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -474,6 +645,8 @@ const CONFIG = {
 let customers = [];
 let wallets = [];
 let chargeType = "payment";       // "payment" | "subscription"
+let customerMode = "list";        // "list" | "url"
+let customerUrlId = "";           // ID numérico extraído da URL (modo url)
 let sumDisplayMode = "percent";   // "percent" | "currency"
 let splitRows = [];               // [{ id, walletId, mode, input }]
 
@@ -625,6 +798,63 @@ async function loadOptions() {
       err.message + ". Confira se a planilha está compartilhada como 'qualquer pessoa com o link pode visualizar' e se os nomes das abas estão corretos.");
     $("customer-wrap").innerHTML =
       '<div class="loading-state" style="color:var(--error)">Falha ao carregar — recarregue a página</div>';
+  }
+}
+
+// ============================================================
+// CLIENTE · MODO URL (extração do ID numérico)
+// ============================================================
+function extractAsaasCustomerId(input) {
+  const v = String(input || "").trim();
+  if (!v) return null;
+  // Apenas dígitos (mínimo 4 pra não confundir com lixo)
+  if (/^\d{4,}$/.test(v)) return v;
+  // URL do Asaas com /show/{id}  (cobre customerAccount, customer, etc.)
+  const m = v.match(/asaas\.com\/[^/?#]+\/show\/(\d+)/i);
+  if (m) return m[1];
+  // URL parcial sem domínio
+  const m2 = v.match(/\/show\/(\d+)/);
+  if (m2) return m2[1];
+  return null;
+}
+
+// Converte ID numérico (ex: "174529503") para o formato Asaas "cus_000174529503"
+// Padding à esquerda com zeros até 12 dígitos.
+function formatAsaasCustomerId(numericId) {
+  const n = String(numericId || "").trim();
+  if (!n) return "";
+  return "cus_" + n.padStart(12, "0");
+}
+
+function setCustomerMode(mode) {
+  customerMode = mode;
+  document.querySelectorAll(".customer-mode-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mode === mode);
+  });
+  $("customer-wrap").style.display     = mode === "list" ? "" : "none";
+  $("customer-url-wrap").style.display = mode === "url"  ? "" : "none";
+  hideBanner();
+}
+
+function updateCustomerUrlFeedback() {
+  const raw = $("customer_url").value;
+  const id = extractAsaasCustomerId(raw);
+  const fb = $("customer-url-feedback");
+  if (!raw.trim()) {
+    customerUrlId = "";
+    fb.className = "url-feedback";
+    fb.textContent = "Cole a URL completa do contato ou apenas o ID numérico.";
+    return;
+  }
+  if (id) {
+    customerUrlId = id;
+    const formatted = formatAsaasCustomerId(id);
+    fb.className = "url-feedback ok";
+    fb.innerHTML = `ID identificado: <span class="badge">${escapeHtml(formatted)}</span>`;
+  } else {
+    customerUrlId = "";
+    fb.className = "url-feedback error";
+    fb.textContent = "Não consegui extrair o ID — confira se a URL está completa.";
   }
 }
 
@@ -891,6 +1121,16 @@ document.querySelectorAll(".type-btn").forEach(btn => {
 // ============================================================
 $("billingType").addEventListener("change", applyBillingTypeUI);
 
+document.querySelectorAll(".customer-mode-btn").forEach(btn => {
+  btn.addEventListener("click", () => setCustomerMode(btn.dataset.mode));
+});
+
+$("customer_url").addEventListener("input", updateCustomerUrlFeedback);
+$("customer_url").addEventListener("paste", () => {
+  // dá tempo do paste materializar antes de extrair
+  setTimeout(updateCustomerUrlFeedback, 0);
+});
+
 $("add-split").addEventListener("click", () => {
   if (splitRows.length >= CONFIG.MAX_SPLITS) return;
   splitRows.push({ id: uid(), walletId: "", mode: "percent", input: "" });
@@ -918,7 +1158,15 @@ async function handleSubmit(e) {
   e.preventDefault();
   hideBanner();
 
-  const customer_id = $("customer_id")?.value || "";
+  // Cliente: pega do select (modo lista) ou do input de URL (modo url)
+  let customer_id = "";
+  if (customerMode === "list") {
+    customer_id = $("customer_id")?.value || "";
+  } else {
+    const numericId = customerUrlId || extractAsaasCustomerId($("customer_url").value) || "";
+    customer_id = numericId ? formatAsaasCustomerId(numericId) : "";
+  }
+
   const billingType = $("billingType").value;
   const installmentCount = parseInt($("installmentCount").value || "1", 10);
   const cycle = $("cycle").value;
@@ -929,7 +1177,11 @@ async function handleSubmit(e) {
 
   // ===== validações =====
   const errors = [];
-  if (!customer_id) errors.push("Selecione um cliente.");
+  if (!customer_id) {
+    errors.push(customerMode === "url"
+      ? "Cole uma URL válida do Asaas ou um ID numérico."
+      : "Selecione um cliente.");
+  }
   if (!billingType) errors.push("Selecione a forma de pagamento.");
   if (!valueRaw || isNaN(value) || value <= 0) errors.push("Informe um valor válido.");
   if (!dueDate) errors.push("Informe a data de vencimento.");
@@ -1061,6 +1313,10 @@ function resetForm() {
   $("form").reset();
   splitRows = [];
   sumDisplayMode = "percent";
+  customerUrlId = "";
+  $("customer_url").value = "";
+  updateCustomerUrlFeedback();
+  setCustomerMode("list");
   renderSplits();
   applyBillingTypeUI();
   setDefaultDate();
