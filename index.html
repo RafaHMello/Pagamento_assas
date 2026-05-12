@@ -155,7 +155,19 @@
   /* ============================================
      COMBOBOX (busca + filtragem em tempo real)
      ============================================ */
-  .combo { position: relative; width: 100%; }
+.combo {
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.combo.open {
+  z-index: 9999;
+}
+
+.split-row:has(.combo.open) {
+  z-index: 9999;
+}
   .combo-trigger {
     display: flex; align-items: center; gap: 6px;
     width: 100%; padding: 0 10px 0 12px;
@@ -193,9 +205,9 @@
   .combo-chevron { transition: transform 0.15s; pointer-events: none; }
   .combo.open .combo-chevron { transform: rotate(180deg); }
 
-  .combo-list {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    z-index: 50;
+.combo-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  z-index: 10000;
     max-height: 240px; overflow-y: auto;
     background: var(--surface);
     border: 1px solid var(--line-strong);
@@ -251,12 +263,14 @@
   .combo.compact .combo-item .combo-item-id { font-size: 10.5px; }
 
   .splits-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
-  .split-row {
-    padding: 14px;
-    border: 1px solid var(--line); border-radius: var(--radius);
-    background: var(--surface-alt);
-    transition: border-color 0.15s, background 0.15s;
-  }
+.split-row {
+  position: relative;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  transition: border-color 0.15s, background 0.15s;
+}
   .split-row.invalid { border-color: var(--error); background: var(--error-bg); }
   .split-row .row-grid {
     display: grid;
