@@ -290,11 +290,11 @@
 
   /* Link de pagamento + botão copiar dentro do banner */
   .payment-link-wrap {
-    display: flex; align-items: stretch; gap: 8px;
-    margin-top: 12px; padding: 6px;
-    background: rgba(255,255,255,0.55);
-    border: 1px solid rgba(31,107,58,0.18);
-    border-radius: var(--radius);
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 14px; padding: 12px;
+    background: #FFFFFF;
+    border: 2px solid var(--success);
+    border-radius: 10px;
   }
   .payment-link {
     flex: 1; min-width: 0;
@@ -307,16 +307,16 @@
   .payment-link:hover { text-decoration: underline; }
   .copy-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 12px;
-    background: var(--surface);
-    border: 1px solid rgba(31,107,58,0.3);
-    border-radius: 6px;
-    color: var(--success);
-    font-family: inherit; font-size: 12px; font-weight: 500;
+    padding: 10px 16px;
+    background: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all 0.15s;
     white-space: nowrap;
   }
-  .copy-btn:hover { background: var(--success); color: #fff; border-color: var(--success); }
+  .copy-btn:hover { filter: brightness(0.92); }
   .copy-btn:active { transform: scale(0.97); }
   .copy-btn.copied { background: var(--success); color: #fff; border-color: var(--success); }
   .copy-btn svg { width: 13px; height: 13px; }
@@ -670,6 +670,50 @@ const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmtBRL = (n) => (isNaN(n) ? 0 : n).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtPct = (n) => round2(n || 0) + "%";
 
+function sortByNameOrId(list) {
+  return [...list].sort((a, b) => {
+    const left = String(a?.name || a?.id || "").trim();
+    const right = String(b?.name || b?.id || "").trim();
+    return left.localeCompare(right, "pt-BR", { sensitivity: "base", numeric: true });
+  });
+}
+
+function extractPaymentLink(data) {
+  const keys = ["link_pagamento", "linkPagamento", "invoiceUrl", "bankSlipUrl", "paymentLink", "url"];
+
+  if (!data) return "";
+
+  if (typeof data === "string") {
+    const trimmed = data.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return "";
+  }
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const found = extractPaymentLink(item);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  if (typeof data === "object") {
+    for (const key of keys) {
+      if (typeof data[key] === "string" && data[key].trim()) {
+        return data[key].trim();
+      }
+    }
+
+    // Caso o n8n devolva o link dentro de outro objeto, procura recursivamente.
+    for (const value of Object.values(data)) {
+      const found = extractPaymentLink(value);
+      if (found) return found;
+    }
+  }
+
+  return "";
+}
+
 function showBanner(type, title, message, paymentLink) {
   const b = $("banner");
   b.className = "banner show " + type;
@@ -782,7 +826,8 @@ async function loadOptions() {
       fetchSheetColumn(CONFIG.CUSTOMERS_SHEET, CONFIG.CUSTOMERS_RANGE, isCustomerId),
       fetchSheetColumn(CONFIG.WALLETS_SHEET,   CONFIG.WALLETS_RANGE,   isWalletId)
     ]);
-    customers = cust; wallets = wal;
+    customers = sortByNameOrId(cust);
+    wallets = sortByNameOrId(wal);
     renderCustomerSelect();
     renderSplits();
     if (customers.length === 0) {
@@ -862,7 +907,7 @@ function updateCustomerUrlFeedback() {
 // RENDER · CLIENTE
 // ============================================================
 function renderCustomerSelect() {
-  const opts = customers.map(c => {
+  const opts = sortByNameOrId(customers).map(c => {
     const label = c.name ? `${escapeHtml(c.name)} — ${escapeHtml(c.id)}` : escapeHtml(c.id);
     return `<option value="${escapeAttr(c.id)}">${label}</option>`;
   }).join("");
@@ -914,7 +959,7 @@ function renderSplits() {
   const totalValue = getTotalValue();
 
   list.innerHTML = splitRows.map((row, idx) => {
-    const opts = wallets.map(w => {
+    const opts = sortByNameOrId(wallets).map(w => {
       const label = w.name ? `${escapeHtml(w.name)} — ${escapeHtml(w.id)}` : escapeHtml(w.id);
       return `<option value="${escapeAttr(w.id)}" ${row.walletId === w.id ? "selected" : ""}>${label}</option>`;
     }).join("");
@@ -1271,21 +1316,25 @@ async function handleSubmit(e) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    // n8n pode responder com { link_pagamento: "..." } ou um array,
-    // ou ainda devolver vazio — todos os casos são tratados.
+    // n8n pode responder com { link_pagamento: "..." }, um array como
+    // [{ link_pagamento: "..." }], ou até o link dentro de um objeto aninhado.
     let paymentLink = "";
     try {
       const txt = await res.text();
       console.log("[LP Asaas] Response bruta do webhook:", txt);
-      if (txt) {
-        const data = JSON.parse(txt);
-        console.log("[LP Asaas] Response parseada:", data);
-        const node = Array.isArray(data) ? data[0] : data;
-        paymentLink = node?.link_pagamento || node?.linkPagamento ||
-                      node?.invoiceUrl || node?.bankSlipUrl || "";
+
+      if (txt && txt.trim()) {
+        try {
+          const data = JSON.parse(txt);
+          console.log("[LP Asaas] Response parseada:", data);
+          paymentLink = extractPaymentLink(data);
+        } catch (_) {
+          // Fallback caso o webhook devolva texto puro com o link.
+          paymentLink = extractPaymentLink(txt);
+        }
       }
     } catch (parseErr) {
-      console.warn("[LP Asaas] Resposta não é JSON válido:", parseErr);
+      console.warn("[LP Asaas] Não foi possível ler a resposta:", parseErr);
     }
     console.log("[LP Asaas] Link extraído:", paymentLink || "(nenhum)");
 
