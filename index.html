@@ -95,7 +95,7 @@
     box-shadow: var(--shadow-md);
     /* overflow: hidden removido para permitir que os dropdowns dos comboboxes apareçam */
   }
-  .section { padding: 28px 32px; border-bottom: 1px solid var(--line); }
+  .section { padding: 28px 32px; border-bottom: 1px solid var(--line); position: relative; z-index: 2; }
   .section:last-of-type { border-bottom: none; }
 
   .section-head {
@@ -355,6 +355,8 @@
     border-top: 1px solid var(--line);
     border-bottom-left-radius: var(--radius-lg);
     border-bottom-right-radius: var(--radius-lg);
+    position: relative;
+    z-index: 1;
   }
   .submit-btn {
     width: 100%; padding: 14px 20px;
