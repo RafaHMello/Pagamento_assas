@@ -92,7 +92,8 @@
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md); overflow: hidden;
+    box-shadow: var(--shadow-md);
+    /* overflow: hidden removido para permitir que os dropdowns dos comboboxes apareçam */
   }
   .section { padding: 28px 32px; border-bottom: 1px solid var(--line); }
   .section:last-of-type { border-bottom: none; }
@@ -150,6 +151,104 @@
     font-family: 'Geist Mono', monospace; font-size: 13px;
     color: var(--ink-mute); pointer-events: none;
   }
+
+  /* ============================================
+     COMBOBOX (busca + filtragem em tempo real)
+     ============================================ */
+  .combo { position: relative; width: 100%; }
+  .combo-trigger {
+    display: flex; align-items: center; gap: 6px;
+    width: 100%; padding: 0 10px 0 12px;
+    min-height: 40px;
+    border: 1px solid var(--line-strong); border-radius: var(--radius);
+    background: #FDFDFB;
+    cursor: text;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .combo.open .combo-trigger,
+  .combo-trigger:focus-within {
+    border-color: var(--ink); background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(15,15,14,0.08);
+  }
+  .combo-search {
+    flex: 1; min-width: 0;
+    border: none !important;
+    background: transparent !important;
+    padding: 8px 0 !important;
+    box-shadow: none !important;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+  }
+  .combo-search::placeholder { color: var(--ink-mute); }
+  .combo-clear, .combo-chevron {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    background: transparent; border: none; padding: 0;
+    color: var(--ink-mute); cursor: pointer; flex-shrink: 0;
+    border-radius: 4px;
+  }
+  .combo-clear:hover { color: var(--ink); background: rgba(15,15,14,0.05); }
+  .combo-clear svg, .combo-chevron svg { width: 12px; height: 12px; display: block; }
+  .combo-chevron { transition: transform 0.15s; pointer-events: none; }
+  .combo.open .combo-chevron { transform: rotate(180deg); }
+
+  .combo-list {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    z-index: 50;
+    max-height: 240px; overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px -8px rgba(15,15,14,0.18), 0 2px 6px rgba(15,15,14,0.06);
+    display: none;
+    padding: 4px;
+  }
+  .combo.open .combo-list { display: block; }
+  .combo-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--ink);
+    display: flex; flex-direction: column; gap: 2px;
+    transition: background 0.1s;
+  }
+  .combo-item:hover,
+  .combo-item.active {
+    background: var(--surface-alt);
+  }
+  .combo-item.selected {
+    background: rgba(15,15,14,0.06);
+  }
+  .combo-item .combo-item-id {
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .combo-item mark {
+    background: rgba(184, 64, 51, 0.15);
+    color: inherit;
+    padding: 0 1px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  .combo-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--ink-mute);
+    font-size: 13px;
+  }
+
+  /* Variante compacta usada dentro das linhas de split */
+  .combo.compact .combo-trigger { min-height: 38px; padding: 0 8px; }
+  .combo.compact .combo-search { font-size: 13px; padding: 6px 0 !important; }
+  .combo.compact .combo-item { padding: 7px 8px; font-size: 13px; }
+  .combo.compact .combo-item .combo-item-id { font-size: 10.5px; }
 
   .splits-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
   .split-row {
@@ -240,6 +339,8 @@
   .actions {
     padding: 24px 32px; background: var(--surface-alt);
     border-top: 1px solid var(--line);
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
   }
   .submit-btn {
     width: 100%; padding: 14px 20px;
@@ -460,6 +561,7 @@
     .actions { padding: 18px 20px; }
     .field-row { grid-template-columns: 1fr; gap: 18px; }
     .split-row .row-grid { grid-template-columns: 1fr 56px 90px 32px; gap: 8px; }
+    .combo.compact .combo-trigger { padding: 0 6px; }
   }
 </style>
 </head>
@@ -633,9 +735,7 @@ const CONFIG = {
   WEBHOOK_URL: "https://n8n.dreamcommerce.com.br/webhook/067abb3a-5d5c-4e22-8393-42b4bb2503bd",
   SHEET_ID: "1i5QfaJhw7CbJk47HUgSOr7Ff5kHfIkyJhUHk0_-KqIk",
   CUSTOMERS_SHEET: "Clientes",
-  CUSTOMERS_RANGE: "D:D",
   WALLETS_SHEET:   "Carteiras para Splits",
-  WALLETS_RANGE:   "A:A",
   MAX_SPLITS: 5
 };
 
@@ -649,6 +749,7 @@ let customerMode = "list";        // "list" | "url"
 let customerUrlId = "";           // ID numérico extraído da URL (modo url)
 let sumDisplayMode = "percent";   // "percent" | "currency"
 let splitRows = [];               // [{ id, walletId, mode, input }]
+let customerCombo = null;         // controle do combobox de cliente
 
 // ============================================================
 // HELPERS
@@ -678,40 +779,129 @@ function sortByNameOrId(list) {
   });
 }
 
-function extractPaymentLink(data) {
-  const keys = ["link_pagamento", "linkPagamento", "invoiceUrl", "bankSlipUrl", "paymentLink", "url"];
+// Normaliza para busca insensível a acentos/caixa
+function normalizeText(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
+// Destaca o trecho que casa com a busca dentro do texto exibido
+function highlightMatch(text, query) {
+  const safeText = escapeHtml(text);
+  if (!query) return safeText;
+  const normText = normalizeText(text);
+  const normQuery = normalizeText(query);
+  if (!normQuery) return safeText;
+  const idx = normText.indexOf(normQuery);
+  if (idx === -1) return safeText;
+  // Como normalização pode mudar comprimento (acentos viram 2 chars), usamos um
+  // mapeamento ingênuo: assumimos 1-pra-1 (true em PT-BR pra letras comuns).
+  // Funciona bem na prática para os nomes e IDs em uso.
+  const before = escapeHtml(text.slice(0, idx));
+  const match  = escapeHtml(text.slice(idx, idx + normQuery.length));
+  const after  = escapeHtml(text.slice(idx + normQuery.length));
+  return `${before}<mark>${match}</mark>${after}`;
+}
+
+// ============================================================
+// EXTRAÇÃO ROBUSTA DO LINK DE PAGAMENTO
+// 4 camadas de fallback:
+//   1. Busca recursiva pelas chaves conhecidas (prioridade)
+//   2. Coleta de TODAS as URLs encontradas em qualquer string
+//   3. Regex no JSON.stringify do payload inteiro (último recurso)
+//   4. Prioriza URLs do asaas.com / com patterns de pagamento
+// ============================================================
+function extractPaymentLink(data) {
   if (!data) return "";
 
-  if (typeof data === "string") {
-    const trimmed = data.trim();
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    return "";
-  }
+  const priorityKeys = [
+    "link_pagamento", "linkPagamento",
+    "invoiceUrl", "invoice_url",
+    "bankSlipUrl", "bank_slip_url",
+    "paymentLink", "payment_link",
+    "checkoutUrl", "checkout_url",
+    "url", "link"
+  ];
 
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      const found = extractPaymentLink(item);
-      if (found) return found;
+  // ---- LAYER 1: busca recursiva nas chaves prioritárias ----
+  function searchPriorityKeys(obj, depth) {
+    if (depth > 8 || obj == null) return "";
+    if (typeof obj === "string") {
+      const t = obj.trim();
+      return /^https?:\/\//i.test(t) ? t : "";
     }
-    return "";
-  }
-
-  if (typeof data === "object") {
-    for (const key of keys) {
-      if (typeof data[key] === "string" && data[key].trim()) {
-        return data[key].trim();
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        const r = searchPriorityKeys(item, depth + 1);
+        if (r) return r;
+      }
+      return "";
+    }
+    if (typeof obj === "object") {
+      for (const key of priorityKeys) {
+        if (typeof obj[key] === "string") {
+          const t = obj[key].trim();
+          if (/^https?:\/\//i.test(t)) return t;
+        }
+      }
+      for (const val of Object.values(obj)) {
+        const r = searchPriorityKeys(val, depth + 1);
+        if (r) return r;
       }
     }
-
-    // Caso o n8n devolva o link dentro de outro objeto, procura recursivamente.
-    for (const value of Object.values(data)) {
-      const found = extractPaymentLink(value);
-      if (found) return found;
-    }
+    return "";
   }
 
-  return "";
+  const fromKeys = searchPriorityKeys(data, 0);
+  if (fromKeys) return fromKeys;
+
+  // ---- LAYER 2: coletar TODAS as URLs presentes em qualquer string ----
+  const urls = [];
+  function collectUrls(obj, depth) {
+    if (depth > 8 || obj == null) return;
+    if (typeof obj === "string") {
+      const matches = obj.match(/https?:\/\/[^\s"'<>)\]]+/gi);
+      if (matches) urls.push(...matches);
+      return;
+    }
+    if (Array.isArray(obj)) {
+      obj.forEach(v => collectUrls(v, depth + 1));
+      return;
+    }
+    if (typeof obj === "object") {
+      Object.values(obj).forEach(v => collectUrls(v, depth + 1));
+    }
+  }
+  collectUrls(data, 0);
+
+  // ---- LAYER 3: regex em JSON.stringify (caso layer 2 falhe) ----
+  if (urls.length === 0) {
+    try {
+      const blob = typeof data === "string" ? data : JSON.stringify(data);
+      const matches = blob.match(/https?:\/\/[^\s"'<>)\]]+/gi);
+      if (matches) urls.push(...matches);
+    } catch (_) { /* ignore */ }
+  }
+
+  if (urls.length === 0) return "";
+
+  // ---- LAYER 4: priorização ----
+  const cleaned = urls.map(u => u.replace(/[.,;)\]]+$/, ""));
+
+  // 4a. URL do Asaas com pattern claro de página de pagamento
+  const asaasPayPattern = cleaned.find(u =>
+    /asaas\.com\/(i|c|b|pay|invoice|checkout)\//i.test(u)
+  );
+  if (asaasPayPattern) return asaasPayPattern;
+
+  // 4b. Qualquer URL do asaas.com
+  const asaasAny = cleaned.find(u => /asaas\.com/i.test(u));
+  if (asaasAny) return asaasAny;
+
+  // 4c. Primeira URL encontrada
+  return cleaned[0];
 }
 
 function showBanner(type, title, message, paymentLink) {
@@ -741,7 +931,6 @@ function showBanner(type, title, message, paymentLink) {
       try {
         await navigator.clipboard.writeText(link);
       } catch (_) {
-        // fallback pra navegadores antigos / contextos sem permissão
         const ta = document.createElement("textarea");
         ta.value = link;
         ta.style.position = "fixed"; ta.style.opacity = "0";
@@ -795,24 +984,74 @@ function parseCSV(text) {
   return rows;
 }
 
-async function fetchSheetColumn(sheetName, range, idValidator) {
+// Busca a aba inteira (A:Z), detecta automaticamente:
+//  - a coluna que contém os IDs (usando o validator)
+//  - a coluna mais "textual" (provável nome) entre as demais
+// Retorna [{ id, name }]
+async function fetchSheetRecords(sheetName, idValidator) {
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq`
             + `?tqx=out:csv`
             + `&sheet=${encodeURIComponent(sheetName)}`
-            + `&range=${encodeURIComponent(range)}`;
+            + `&range=A:Z`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Sheets HTTP ${res.status} (aba "${sheetName}")`);
   const text = await res.text();
 
-  const rows = parseCSV(text);
-  const values = rows.map(r => String(r[0] ?? "").trim()).filter(v => v.length > 0);
-  if (values.length && idValidator && !idValidator(values[0])) values.shift();
+  const rows = parseCSV(text).filter(r => r.some(c => String(c ?? "").trim() !== ""));
+  if (rows.length === 0) return [];
 
-  const seen = new Set(); const out = [];
-  for (const id of values) {
+  const numCols = Math.max(...rows.map(r => r.length));
+
+  // ---- Detecta coluna do ID: a que tem maior taxa de match com o validator
+  let idCol = -1, bestRatio = 0;
+  for (let col = 0; col < numCols; col++) {
+    let hits = 0, total = 0;
+    for (const r of rows) {
+      const v = String(r[col] ?? "").trim();
+      if (!v) continue;
+      total++;
+      if (idValidator(v)) hits++;
+    }
+    const ratio = total ? hits / total : 0;
+    if (ratio > bestRatio) { bestRatio = ratio; idCol = col; }
+  }
+  if (idCol === -1 || bestRatio < 0.5) {
+    // fallback: assume primeira coluna não vazia
+    for (let col = 0; col < numCols; col++) {
+      const hasData = rows.some(r => String(r[col] ?? "").trim() !== "");
+      if (hasData) { idCol = col; break; }
+    }
+  }
+  if (idCol === -1) return [];
+
+  // ---- Detecta coluna do nome: a coluna não-ID com mais texto preenchido
+  // (e que NÃO bate com o validator de ID na maioria das linhas)
+  let nameCol = -1, bestFilled = 0;
+  for (let col = 0; col < numCols; col++) {
+    if (col === idCol) continue;
+    let filled = 0, idMatches = 0;
+    for (const r of rows) {
+      const v = String(r[col] ?? "").trim();
+      if (v) {
+        filled++;
+        if (idValidator(v)) idMatches++;
+      }
+    }
+    // ignora colunas que são na verdade outros IDs
+    if (filled > 0 && idMatches / filled > 0.5) continue;
+    if (filled > bestFilled) { bestFilled = filled; nameCol = col; }
+  }
+
+  // ---- Monta registros, deduplicando por ID
+  const seen = new Set();
+  const out = [];
+  for (const r of rows) {
+    const id = String(r[idCol] ?? "").trim();
+    if (!id || !idValidator(id)) continue;
     if (seen.has(id)) continue;
     seen.add(id);
-    out.push({ id, name: "" });
+    const name = nameCol >= 0 ? String(r[nameCol] ?? "").trim() : "";
+    out.push({ id, name });
   }
   return out;
 }
@@ -823,8 +1062,8 @@ async function loadOptions() {
 
   try {
     const [cust, wal] = await Promise.all([
-      fetchSheetColumn(CONFIG.CUSTOMERS_SHEET, CONFIG.CUSTOMERS_RANGE, isCustomerId),
-      fetchSheetColumn(CONFIG.WALLETS_SHEET,   CONFIG.WALLETS_RANGE,   isWalletId)
+      fetchSheetRecords(CONFIG.CUSTOMERS_SHEET, isCustomerId),
+      fetchSheetRecords(CONFIG.WALLETS_SHEET,   isWalletId)
     ]);
     customers = sortByNameOrId(cust);
     wallets = sortByNameOrId(wal);
@@ -832,10 +1071,10 @@ async function loadOptions() {
     renderSplits();
     if (customers.length === 0) {
       showBanner("error", "Nenhum cliente carregado",
-        `A aba "${CONFIG.CUSTOMERS_SHEET}" (coluna ${CONFIG.CUSTOMERS_RANGE}) está vazia ou inacessível. Verifique se a planilha está compartilhada como "qualquer pessoa com o link pode visualizar".`);
+        `A aba "${CONFIG.CUSTOMERS_SHEET}" está vazia ou inacessível. Verifique se a planilha está compartilhada como "qualquer pessoa com o link pode visualizar".`);
     } else if (wallets.length === 0) {
       showBanner("error", "Nenhuma carteira carregada",
-        `A aba "${CONFIG.WALLETS_SHEET}" (coluna ${CONFIG.WALLETS_RANGE}) está vazia ou inacessível.`);
+        `A aba "${CONFIG.WALLETS_SHEET}" está vazia ou inacessível.`);
     }
   } catch (err) {
     console.error(err);
@@ -847,24 +1086,244 @@ async function loadOptions() {
 }
 
 // ============================================================
+// COMBOBOX (busca + filtragem)
+// ============================================================
+function comboboxHTML({ placeholder, compact }) {
+  const cls = "combo" + (compact ? " compact" : "");
+  return `
+    <div class="${cls}">
+      <div class="combo-trigger">
+        <input type="text" class="combo-search" placeholder="${escapeAttr(placeholder || 'Buscar…')}" autocomplete="off" spellcheck="false" />
+        <button type="button" class="combo-clear" tabindex="-1" aria-label="Limpar" style="display:none;">
+          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <span class="combo-chevron" aria-hidden="true">
+          <svg viewBox="0 0 12 8" fill="none">
+            <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </div>
+      <div class="combo-list" role="listbox"></div>
+    </div>`;
+}
+
+/**
+ * Inicializa um combobox.
+ * @param {HTMLElement} root - elemento .combo
+ * @param {Array<{id,name}>} items
+ * @param {Object} opts
+ * @param {string} [opts.initialId] - ID selecionado inicial
+ * @param {(id:string, item:object|null) => void} [opts.onChange]
+ * @param {string} [opts.emptyText]
+ * @returns {{ getValue: () => string, setValue: (id:string)=>void, reset: ()=>void }}
+ */
+function setupCombobox(root, items, opts = {}) {
+  const input    = root.querySelector(".combo-search");
+  const clearBtn = root.querySelector(".combo-clear");
+  const list     = root.querySelector(".combo-list");
+
+  let selectedId = "";
+  let activeIdx  = -1;
+  let currentMatches = [];
+
+  function getItem(id) { return items.find(i => i.id === id) || null; }
+  function labelOf(item) { return item.name ? `${item.name} — ${item.id}` : item.id; }
+
+  function updateClearVisibility() {
+    clearBtn.style.display = (selectedId || input.value) ? "" : "none";
+  }
+
+  function open() {
+    root.classList.add("open");
+    renderList(input.value);
+  }
+  function close() {
+    root.classList.remove("open");
+    activeIdx = -1;
+    // se há um selecionado, restaura o label completo no input
+    if (selectedId) {
+      const it = getItem(selectedId);
+      if (it) input.value = labelOf(it);
+    } else {
+      // se não há seleção, limpa o texto digitado pra não confundir
+      if (!selectedId) input.value = "";
+    }
+    updateClearVisibility();
+  }
+
+  function renderList(query) {
+    const q = normalizeText(query || "");
+    const matches = items.filter(it => {
+      if (!q) return true;
+      return normalizeText(it.name).includes(q) || normalizeText(it.id).includes(q);
+    });
+    currentMatches = matches;
+
+    if (matches.length === 0) {
+      list.innerHTML = `<div class="combo-empty">Nenhum resultado para "${escapeHtml(query)}"</div>`;
+      return;
+    }
+
+    list.innerHTML = matches.slice(0, 200).map((it, idx) => {
+      const nameHtml = it.name ? highlightMatch(it.name, query) : "";
+      const idHtml   = highlightMatch(it.id, query);
+      const isSel    = it.id === selectedId;
+      const isActive = idx === activeIdx;
+      return `
+        <div class="combo-item ${isSel ? 'selected' : ''} ${isActive ? 'active' : ''}"
+             data-id="${escapeAttr(it.id)}" data-idx="${idx}" role="option" aria-selected="${isSel}">
+          ${nameHtml ? `<div class="combo-item-name">${nameHtml}</div>` : ""}
+          <div class="combo-item-id">${idHtml}</div>
+        </div>`;
+    }).join("");
+
+    list.querySelectorAll(".combo-item").forEach(el => {
+      el.addEventListener("mousedown", (ev) => {
+        // mousedown (não click) pra disparar antes do blur do input
+        ev.preventDefault();
+        select(el.dataset.id);
+      });
+    });
+  }
+
+  function select(id) {
+    selectedId = id;
+    const it = getItem(id);
+    input.value = it ? labelOf(it) : "";
+    close();
+    updateClearVisibility();
+    if (opts.onChange) opts.onChange(selectedId, it);
+  }
+
+  function clearSelection() {
+    selectedId = "";
+    input.value = "";
+    activeIdx = -1;
+    updateClearVisibility();
+    if (opts.onChange) opts.onChange("", null);
+    input.focus();
+    open();
+  }
+
+  function moveActive(delta) {
+    if (currentMatches.length === 0) return;
+    activeIdx = (activeIdx + delta + currentMatches.length) % currentMatches.length;
+    // re-render só atualizando classes
+    list.querySelectorAll(".combo-item").forEach(el => {
+      const idx = parseInt(el.dataset.idx, 10);
+      el.classList.toggle("active", idx === activeIdx);
+    });
+    // scroll into view
+    const activeEl = list.querySelector(`.combo-item[data-idx="${activeIdx}"]`);
+    if (activeEl) {
+      const r = activeEl.getBoundingClientRect();
+      const lr = list.getBoundingClientRect();
+      if (r.top < lr.top) activeEl.scrollIntoView({ block: "nearest" });
+      else if (r.bottom > lr.bottom) activeEl.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  // ---- listeners ----
+  input.addEventListener("focus", () => {
+    // se há seleção, ao focar, mostra o texto inteiro mas seleciona-o
+    if (selectedId) input.select();
+    open();
+  });
+
+  input.addEventListener("input", () => {
+    // qualquer mudança manual = desfaz a seleção até o usuário escolher
+    if (selectedId) selectedId = "";
+    activeIdx = -1;
+    open();
+    renderList(input.value);
+    updateClearVisibility();
+    if (opts.onChange) opts.onChange("", null);
+  });
+
+  input.addEventListener("keydown", (ev) => {
+    if (!root.classList.contains("open") && ev.key !== "Tab" && ev.key !== "Escape") {
+      open();
+    }
+    if (ev.key === "ArrowDown") { ev.preventDefault(); moveActive(1); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); moveActive(-1); }
+    else if (ev.key === "Enter") {
+      if (activeIdx >= 0 && currentMatches[activeIdx]) {
+        ev.preventDefault();
+        select(currentMatches[activeIdx].id);
+      } else if (currentMatches.length === 1) {
+        ev.preventDefault();
+        select(currentMatches[0].id);
+      }
+    }
+    else if (ev.key === "Escape") {
+      close();
+      input.blur();
+    }
+    else if (ev.key === "Tab") {
+      close();
+    }
+  });
+
+  clearBtn.addEventListener("mousedown", (ev) => {
+    ev.preventDefault();
+    clearSelection();
+  });
+
+  // fechar ao clicar fora
+  document.addEventListener("mousedown", (ev) => {
+    if (!root.contains(ev.target)) close();
+  });
+
+  // valor inicial
+  if (opts.initialId) {
+    const it = getItem(opts.initialId);
+    if (it) {
+      selectedId = opts.initialId;
+      input.value = labelOf(it);
+    }
+  }
+  updateClearVisibility();
+
+  return {
+    getValue: () => selectedId,
+    setValue: (id) => {
+      if (id) {
+        const it = getItem(id);
+        if (it) {
+          selectedId = id;
+          input.value = labelOf(it);
+        }
+      } else {
+        selectedId = "";
+        input.value = "";
+      }
+      updateClearVisibility();
+    },
+    reset: () => {
+      selectedId = "";
+      input.value = "";
+      activeIdx = -1;
+      updateClearVisibility();
+    }
+  };
+}
+
+// ============================================================
 // CLIENTE · MODO URL (extração do ID numérico)
 // ============================================================
 function extractAsaasCustomerId(input) {
   const v = String(input || "").trim();
   if (!v) return null;
-  // Apenas dígitos (mínimo 4 pra não confundir com lixo)
   if (/^\d{4,}$/.test(v)) return v;
-  // URL do Asaas com /show/{id}  (cobre customerAccount, customer, etc.)
   const m = v.match(/asaas\.com\/[^/?#]+\/show\/(\d+)/i);
   if (m) return m[1];
-  // URL parcial sem domínio
   const m2 = v.match(/\/show\/(\d+)/);
   if (m2) return m2[1];
   return null;
 }
 
-// Converte ID numérico (ex: "174529503") para o formato Asaas "cus_000174529503"
-// Padding à esquerda com zeros até 12 dígitos.
 function formatAsaasCustomerId(numericId) {
   const n = String(numericId || "").trim();
   if (!n) return "";
@@ -904,18 +1363,15 @@ function updateCustomerUrlFeedback() {
 }
 
 // ============================================================
-// RENDER · CLIENTE
+// RENDER · CLIENTE (combobox pesquisável)
 // ============================================================
 function renderCustomerSelect() {
-  const opts = sortByNameOrId(customers).map(c => {
-    const label = c.name ? `${escapeHtml(c.name)} — ${escapeHtml(c.id)}` : escapeHtml(c.id);
-    return `<option value="${escapeAttr(c.id)}">${label}</option>`;
-  }).join("");
-  $("customer-wrap").innerHTML = `
-    <select id="customer_id" name="customer_id" required>
-      <option value="">Selecione um cliente…</option>
-      ${opts}
-    </select>`;
+  const wrap = $("customer-wrap");
+  wrap.innerHTML = comboboxHTML({ placeholder: "Digite o nome ou ID do cliente…" });
+  const root = wrap.querySelector(".combo");
+  customerCombo = setupCombobox(root, sortByNameOrId(customers), {
+    onChange: () => {/* nada — valor é lido no submit */}
+  });
 }
 
 // ============================================================
@@ -932,7 +1388,7 @@ function splitPercentage(row, totalValue) {
 }
 
 // ============================================================
-// RENDER · SPLITS
+// RENDER · SPLITS (com combobox de carteira)
 // ============================================================
 function buildEquivalent(row, totalValue) {
   const n = parseNumber(row.input);
@@ -944,7 +1400,6 @@ function buildEquivalent(row, totalValue) {
     }
     return { text: `Equivale a ${fmtPct((n / totalValue) * 100)} do valor total.`, err: false };
   }
-  // percent mode
   if (totalValue && totalValue > 0) {
     return { text: `Equivale a ${fmtBRL(totalValue * n / 100)}.`, err: false };
   }
@@ -957,12 +1412,9 @@ function renderSplits() {
     splitRows.push({ id: uid(), walletId: "", mode: "percent", input: "" });
   }
   const totalValue = getTotalValue();
+  const sortedWallets = sortByNameOrId(wallets);
 
   list.innerHTML = splitRows.map((row, idx) => {
-    const opts = sortByNameOrId(wallets).map(w => {
-      const label = w.name ? `${escapeHtml(w.name)} — ${escapeHtml(w.id)}` : escapeHtml(w.id);
-      return `<option value="${escapeAttr(w.id)}" ${row.walletId === w.id ? "selected" : ""}>${label}</option>`;
-    }).join("");
     const canRemove = splitRows.length > 1;
     const eq = buildEquivalent(row, totalValue);
     const placeholder = row.mode === "percent" ? "0" : "0,00";
@@ -972,10 +1424,7 @@ function renderSplits() {
         <div class="row-grid">
           <div>
             <label>Carteira ${idx + 1}</label>
-            <select data-field="walletId">
-              <option value="">Selecione…</option>
-              ${opts}
-            </select>
+            <div class="wallet-combo-slot"></div>
           </div>
           <div>
             <label>Tipo</label>
@@ -999,31 +1448,43 @@ function renderSplits() {
 
   list.querySelectorAll(".split-row").forEach(el => {
     const id = el.dataset.id;
+    const row = splitRows.find(r => r.id === id);
+    if (!row) return;
 
-    el.querySelectorAll("[data-field]").forEach(input => {
-      input.addEventListener("input", e => {
-        const row = splitRows.find(r => r.id === id);
-        if (!row) return;
+    // ---- Combobox de carteira ----
+    const slot = el.querySelector(".wallet-combo-slot");
+    slot.innerHTML = comboboxHTML({ placeholder: "Buscar carteira…", compact: true });
+    const comboRoot = slot.querySelector(".combo");
+    setupCombobox(comboRoot, sortedWallets, {
+      initialId: row.walletId,
+      onChange: (newId) => {
+        row.walletId = newId;
+        updateRowEquivalent(id);
+        updateSumIndicator();
+      }
+    });
+
+    // ---- Input numérico ----
+    const numInput = el.querySelector("[data-field='input']");
+    if (numInput) {
+      numInput.addEventListener("input", e => {
         let v = e.target.value;
-        if (e.target.dataset.field === "input") {
-          v = v.replace(/[^0-9.,]/g, "");
-          const m = v.match(/[.,]/);
-          if (m) {
-            const pos = v.indexOf(m[0]);
-            v = v.slice(0, pos + 1) + v.slice(pos + 1).replace(/[.,]/g, "");
-          }
-          e.target.value = v;
+        v = v.replace(/[^0-9.,]/g, "");
+        const m = v.match(/[.,]/);
+        if (m) {
+          const pos = v.indexOf(m[0]);
+          v = v.slice(0, pos + 1) + v.slice(pos + 1).replace(/[.,]/g, "");
         }
-        row[e.target.dataset.field] = v;
+        e.target.value = v;
+        row.input = v;
         updateRowEquivalent(id);
         updateSumIndicator();
       });
-    });
+    }
 
+    // ---- Mode buttons (% / R$) ----
     el.querySelectorAll(".mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const row = splitRows.find(r => r.id === id);
-        if (!row) return;
         if (row.mode === btn.dataset.mode) return;
         row.mode = btn.dataset.mode;
         row.input = "";
@@ -1031,6 +1492,7 @@ function renderSplits() {
       });
     });
 
+    // ---- Remove ----
     const removeBtn = el.querySelector("[data-action='remove']");
     if (removeBtn) {
       removeBtn.addEventListener("click", () => {
@@ -1099,7 +1561,6 @@ function updateSumIndicator() {
     el.classList.toggle("invalid", overflow);
   });
 
-  // bloqueia/libera submit
   const submitBtn = $("submit-btn");
   const blockMsg = $("block-msg");
   if (overflow) {
@@ -1115,7 +1576,6 @@ $("sum-pill").addEventListener("click", () => {
   const totalValue = getTotalValue();
   if (sumDisplayMode === "percent") {
     if (!totalValue || totalValue <= 0) {
-      // shake discreto pra avisar que não dá
       const pill = $("sum-pill");
       pill.style.transition = "transform 0.08s";
       pill.style.transform = "translateX(-3px)";
@@ -1172,7 +1632,6 @@ document.querySelectorAll(".customer-mode-btn").forEach(btn => {
 
 $("customer_url").addEventListener("input", updateCustomerUrlFeedback);
 $("customer_url").addEventListener("paste", () => {
-  // dá tempo do paste materializar antes de extrair
   setTimeout(updateCustomerUrlFeedback, 0);
 });
 
@@ -1203,10 +1662,10 @@ async function handleSubmit(e) {
   e.preventDefault();
   hideBanner();
 
-  // Cliente: pega do select (modo lista) ou do input de URL (modo url)
+  // Cliente: pega do combobox (modo lista) ou do input de URL (modo url)
   let customer_id = "";
   if (customerMode === "list") {
-    customer_id = $("customer_id")?.value || "";
+    customer_id = (customerCombo && customerCombo.getValue()) || "";
   } else {
     const numericId = customerUrlId || extractAsaasCustomerId($("customer_url").value) || "";
     customer_id = numericId ? formatAsaasCustomerId(numericId) : "";
@@ -1232,7 +1691,6 @@ async function handleSubmit(e) {
   if (!dueDate) errors.push("Informe a data de vencimento.");
   if (chargeType === "subscription" && !cycle) errors.push("Selecione o ciclo da assinatura.");
 
-  // splits: sempre como % com 2 casas
   const cleanSplits = [];
   let splitInputError = false;
   for (const r of splitRows) {
@@ -1316,8 +1774,6 @@ async function handleSubmit(e) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    // n8n pode responder com { link_pagamento: "..." }, um array como
-    // [{ link_pagamento: "..." }], ou até o link dentro de um objeto aninhado.
     let paymentLink = "";
     try {
       const txt = await res.text();
@@ -1329,7 +1785,7 @@ async function handleSubmit(e) {
           console.log("[LP Asaas] Response parseada:", data);
           paymentLink = extractPaymentLink(data);
         } catch (_) {
-          // Fallback caso o webhook devolva texto puro com o link.
+          // Fallback caso o webhook devolva texto puro com o link
           paymentLink = extractPaymentLink(txt);
         }
       }
@@ -1366,6 +1822,7 @@ function resetForm() {
   $("customer_url").value = "";
   updateCustomerUrlFeedback();
   setCustomerMode("list");
+  renderCustomerSelect(); // recria o combobox zerado
   renderSplits();
   applyBillingTypeUI();
   setDefaultDate();
