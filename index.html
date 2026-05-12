@@ -735,6 +735,10 @@ const CONFIG = {
   WEBHOOK_URL: "https://n8n.dreamcommerce.com.br/webhook/067abb3a-5d5c-4e22-8393-42b4bb2503bd",
   SHEET_ID: "1i5QfaJhw7CbJk47HUgSOr7Ff5kHfIkyJhUHk0_-KqIk",
   CUSTOMERS_SHEET: "Clientes",
+  // Estrutura da aba "Clientes":
+  // A: object   B: id (cus_xxx)   C: dateCreated   D: name   E: email
+  CUSTOMER_ID_COL: 1,    // coluna B
+  CUSTOMER_NAME_COL: 3,  // coluna D
   WALLETS_SHEET:   "Carteiras para Splits",
   MAX_SPLITS: 5
 };
@@ -742,8 +746,8 @@ const CONFIG = {
 // ============================================================
 // STATE
 // ============================================================
-let customers = [];
-let wallets = [];
+let customers = [];               // [{id, name}]
+let wallets = [];                 // [{id, name}]
 let chargeType = "payment";       // "payment" | "subscription"
 let customerMode = "list";        // "list" | "url"
 let customerUrlId = "";           // ID numérico extraído da URL (modo url)
@@ -779,7 +783,6 @@ function sortByNameOrId(list) {
   });
 }
 
-// Normaliza para busca insensível a acentos/caixa
 function normalizeText(s) {
   return String(s || "")
     .toLowerCase()
@@ -787,7 +790,6 @@ function normalizeText(s) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-// Destaca o trecho que casa com a busca dentro do texto exibido
 function highlightMatch(text, query) {
   const safeText = escapeHtml(text);
   if (!query) return safeText;
@@ -796,9 +798,6 @@ function highlightMatch(text, query) {
   if (!normQuery) return safeText;
   const idx = normText.indexOf(normQuery);
   if (idx === -1) return safeText;
-  // Como normalização pode mudar comprimento (acentos viram 2 chars), usamos um
-  // mapeamento ingênuo: assumimos 1-pra-1 (true em PT-BR pra letras comuns).
-  // Funciona bem na prática para os nomes e IDs em uso.
   const before = escapeHtml(text.slice(0, idx));
   const match  = escapeHtml(text.slice(idx, idx + normQuery.length));
   const after  = escapeHtml(text.slice(idx + normQuery.length));
@@ -806,16 +805,10 @@ function highlightMatch(text, query) {
 }
 
 // ============================================================
-// EXTRAÇÃO ROBUSTA DO LINK DE PAGAMENTO
-// 4 camadas de fallback:
-//   1. Busca recursiva pelas chaves conhecidas (prioridade)
-//   2. Coleta de TODAS as URLs encontradas em qualquer string
-//   3. Regex no JSON.stringify do payload inteiro (último recurso)
-//   4. Prioriza URLs do asaas.com / com patterns de pagamento
+// LINK DE PAGAMENTO (mantido)
 // ============================================================
 function extractPaymentLink(data) {
   if (!data) return "";
-
   const priorityKeys = [
     "link_pagamento", "linkPagamento",
     "invoiceUrl", "invoice_url",
@@ -825,7 +818,6 @@ function extractPaymentLink(data) {
     "url", "link"
   ];
 
-  // ---- LAYER 1: busca recursiva nas chaves prioritárias ----
   function searchPriorityKeys(obj, depth) {
     if (depth > 8 || obj == null) return "";
     if (typeof obj === "string") {
@@ -857,7 +849,6 @@ function extractPaymentLink(data) {
   const fromKeys = searchPriorityKeys(data, 0);
   if (fromKeys) return fromKeys;
 
-  // ---- LAYER 2: coletar TODAS as URLs presentes em qualquer string ----
   const urls = [];
   function collectUrls(obj, depth) {
     if (depth > 8 || obj == null) return;
@@ -876,7 +867,6 @@ function extractPaymentLink(data) {
   }
   collectUrls(data, 0);
 
-  // ---- LAYER 3: regex em JSON.stringify (caso layer 2 falhe) ----
   if (urls.length === 0) {
     try {
       const blob = typeof data === "string" ? data : JSON.stringify(data);
@@ -887,20 +877,13 @@ function extractPaymentLink(data) {
 
   if (urls.length === 0) return "";
 
-  // ---- LAYER 4: priorização ----
   const cleaned = urls.map(u => u.replace(/[.,;)\]]+$/, ""));
-
-  // 4a. URL do Asaas com pattern claro de página de pagamento
   const asaasPayPattern = cleaned.find(u =>
     /asaas\.com\/(i|c|b|pay|invoice|checkout)\//i.test(u)
   );
   if (asaasPayPattern) return asaasPayPattern;
-
-  // 4b. Qualquer URL do asaas.com
   const asaasAny = cleaned.find(u => /asaas\.com/i.test(u));
   if (asaasAny) return asaasAny;
-
-  // 4c. Primeira URL encontrada
   return cleaned[0];
 }
 
@@ -922,15 +905,13 @@ function showBanner(type, title, message, paymentLink) {
       </div>`;
   }
   b.innerHTML = html;
-
   const copyBtn = b.querySelector(".copy-btn");
   if (copyBtn) {
     copyBtn.addEventListener("click", async () => {
       const link = copyBtn.dataset.copy;
       const label = copyBtn.querySelector(".copy-label");
-      try {
-        await navigator.clipboard.writeText(link);
-      } catch (_) {
+      try { await navigator.clipboard.writeText(link); }
+      catch (_) {
         const ta = document.createElement("textarea");
         ta.value = link;
         ta.style.position = "fixed"; ta.style.opacity = "0";
@@ -947,7 +928,6 @@ function showBanner(type, title, message, paymentLink) {
       }, 1800);
     });
   }
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 function hideBanner() { $("banner").className = "banner"; }
@@ -984,11 +964,7 @@ function parseCSV(text) {
   return rows;
 }
 
-// Busca a aba inteira (A:Z), detecta automaticamente:
-//  - a coluna que contém os IDs (usando o validator)
-//  - a coluna mais "textual" (provável nome) entre as demais
-// Retorna [{ id, name }]
-async function fetchSheetRecords(sheetName, idValidator) {
+async function fetchSheetRaw(sheetName) {
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq`
             + `?tqx=out:csv`
             + `&sheet=${encodeURIComponent(sheetName)}`
@@ -996,13 +972,34 @@ async function fetchSheetRecords(sheetName, idValidator) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Sheets HTTP ${res.status} (aba "${sheetName}")`);
   const text = await res.text();
+  return parseCSV(text).filter(r => r.some(c => String(c ?? "").trim() !== ""));
+}
 
-  const rows = parseCSV(text).filter(r => r.some(c => String(c ?? "").trim() !== ""));
+// CLIENTES: colunas fixas (B = id, D = nome) — sem adivinhação
+async function fetchCustomers() {
+  const rows = await fetchSheetRaw(CONFIG.CUSTOMERS_SHEET);
+  const isCustomerId = (s) => /^cus_[A-Za-z0-9]+$/.test(s);
+  const seen = new Set();
+  const out = [];
+  for (const r of rows) {
+    const id   = String(r[CONFIG.CUSTOMER_ID_COL]   ?? "").trim();
+    const name = String(r[CONFIG.CUSTOMER_NAME_COL] ?? "").trim();
+    if (!id || !isCustomerId(id)) continue; // ignora cabeçalho e linhas inválidas
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push({ id, name });
+  }
+  return out;
+}
+
+// CARTEIRAS: auto-detecta colunas (id = UUID, nome = coluna mais textual restante)
+async function fetchWallets() {
+  const rows = await fetchSheetRaw(CONFIG.WALLETS_SHEET);
   if (rows.length === 0) return [];
-
+  const isWalletId = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
   const numCols = Math.max(...rows.map(r => r.length));
 
-  // ---- Detecta coluna do ID: a que tem maior taxa de match com o validator
+  // Coluna do ID = maior taxa de UUIDs válidos
   let idCol = -1, bestRatio = 0;
   for (let col = 0; col < numCols; col++) {
     let hits = 0, total = 0;
@@ -1010,13 +1007,12 @@ async function fetchSheetRecords(sheetName, idValidator) {
       const v = String(r[col] ?? "").trim();
       if (!v) continue;
       total++;
-      if (idValidator(v)) hits++;
+      if (isWalletId(v)) hits++;
     }
     const ratio = total ? hits / total : 0;
     if (ratio > bestRatio) { bestRatio = ratio; idCol = col; }
   }
   if (idCol === -1 || bestRatio < 0.5) {
-    // fallback: assume primeira coluna não vazia
     for (let col = 0; col < numCols; col++) {
       const hasData = rows.some(r => String(r[col] ?? "").trim() !== "");
       if (hasData) { idCol = col; break; }
@@ -1024,30 +1020,31 @@ async function fetchSheetRecords(sheetName, idValidator) {
   }
   if (idCol === -1) return [];
 
-  // ---- Detecta coluna do nome: a coluna não-ID com mais texto preenchido
-  // (e que NÃO bate com o validator de ID na maioria das linhas)
-  let nameCol = -1, bestFilled = 0;
+  // Coluna do nome = mais textual, com mais valores ÚNICOS (não-repetitiva)
+  let nameCol = -1, bestScore = 0;
   for (let col = 0; col < numCols; col++) {
     if (col === idCol) continue;
+    const uniques = new Set();
     let filled = 0, idMatches = 0;
     for (const r of rows) {
       const v = String(r[col] ?? "").trim();
       if (v) {
         filled++;
-        if (idValidator(v)) idMatches++;
+        uniques.add(v);
+        if (isWalletId(v)) idMatches++;
       }
     }
-    // ignora colunas que são na verdade outros IDs
     if (filled > 0 && idMatches / filled > 0.5) continue;
-    if (filled > bestFilled) { bestFilled = filled; nameCol = col; }
+    // pontua por nº de valores únicos (descarta colunas que só repetem um valor)
+    const score = uniques.size;
+    if (score > bestScore) { bestScore = score; nameCol = col; }
   }
 
-  // ---- Monta registros, deduplicando por ID
   const seen = new Set();
   const out = [];
   for (const r of rows) {
     const id = String(r[idCol] ?? "").trim();
-    if (!id || !idValidator(id)) continue;
+    if (!id || !isWalletId(id)) continue;
     if (seen.has(id)) continue;
     seen.add(id);
     const name = nameCol >= 0 ? String(r[nameCol] ?? "").trim() : "";
@@ -1057,14 +1054,8 @@ async function fetchSheetRecords(sheetName, idValidator) {
 }
 
 async function loadOptions() {
-  const isCustomerId = (s) => /^cus_[A-Za-z0-9]+$/.test(s);
-  const isWalletId   = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-
   try {
-    const [cust, wal] = await Promise.all([
-      fetchSheetRecords(CONFIG.CUSTOMERS_SHEET, isCustomerId),
-      fetchSheetRecords(CONFIG.WALLETS_SHEET,   isWalletId)
-    ]);
+    const [cust, wal] = await Promise.all([fetchCustomers(), fetchWallets()]);
     customers = sortByNameOrId(cust);
     wallets = sortByNameOrId(wal);
     renderCustomerSelect();
@@ -1109,16 +1100,6 @@ function comboboxHTML({ placeholder, compact }) {
     </div>`;
 }
 
-/**
- * Inicializa um combobox.
- * @param {HTMLElement} root - elemento .combo
- * @param {Array<{id,name}>} items
- * @param {Object} opts
- * @param {string} [opts.initialId] - ID selecionado inicial
- * @param {(id:string, item:object|null) => void} [opts.onChange]
- * @param {string} [opts.emptyText]
- * @returns {{ getValue: () => string, setValue: (id:string)=>void, reset: ()=>void }}
- */
 function setupCombobox(root, items, opts = {}) {
   const input    = root.querySelector(".combo-search");
   const clearBtn = root.querySelector(".combo-clear");
@@ -1142,23 +1123,23 @@ function setupCombobox(root, items, opts = {}) {
   function close() {
     root.classList.remove("open");
     activeIdx = -1;
-    // se há um selecionado, restaura o label completo no input
     if (selectedId) {
       const it = getItem(selectedId);
       if (it) input.value = labelOf(it);
     } else {
-      // se não há seleção, limpa o texto digitado pra não confundir
-      if (!selectedId) input.value = "";
+      input.value = "";
     }
     updateClearVisibility();
   }
 
   function renderList(query) {
     const q = normalizeText(query || "");
-    const matches = items.filter(it => {
-      if (!q) return true;
-      return normalizeText(it.name).includes(q) || normalizeText(it.id).includes(q);
-    });
+    // Se o usuário não está filtrando (campo vazio OU está mostrando o label de um já-selecionado),
+    // mostra a lista completa.
+    const showAll = !q || (selectedId && getItem(selectedId) && normalizeText(labelOf(getItem(selectedId))) === q);
+    const matches = showAll ? items.slice() : items.filter(it =>
+      normalizeText(it.name).includes(q) || normalizeText(it.id).includes(q)
+    );
     currentMatches = matches;
 
     if (matches.length === 0) {
@@ -1166,9 +1147,10 @@ function setupCombobox(root, items, opts = {}) {
       return;
     }
 
-    list.innerHTML = matches.slice(0, 200).map((it, idx) => {
-      const nameHtml = it.name ? highlightMatch(it.name, query) : "";
-      const idHtml   = highlightMatch(it.id, query);
+    const queryForHighlight = showAll ? "" : query;
+    list.innerHTML = matches.slice(0, 300).map((it, idx) => {
+      const nameHtml = it.name ? highlightMatch(it.name, queryForHighlight) : "";
+      const idHtml   = highlightMatch(it.id, queryForHighlight);
       const isSel    = it.id === selectedId;
       const isActive = idx === activeIdx;
       return `
@@ -1181,7 +1163,6 @@ function setupCombobox(root, items, opts = {}) {
 
     list.querySelectorAll(".combo-item").forEach(el => {
       el.addEventListener("mousedown", (ev) => {
-        // mousedown (não click) pra disparar antes do blur do input
         ev.preventDefault();
         select(el.dataset.id);
       });
@@ -1210,30 +1191,26 @@ function setupCombobox(root, items, opts = {}) {
   function moveActive(delta) {
     if (currentMatches.length === 0) return;
     activeIdx = (activeIdx + delta + currentMatches.length) % currentMatches.length;
-    // re-render só atualizando classes
     list.querySelectorAll(".combo-item").forEach(el => {
       const idx = parseInt(el.dataset.idx, 10);
       el.classList.toggle("active", idx === activeIdx);
     });
-    // scroll into view
     const activeEl = list.querySelector(`.combo-item[data-idx="${activeIdx}"]`);
     if (activeEl) {
       const r = activeEl.getBoundingClientRect();
       const lr = list.getBoundingClientRect();
-      if (r.top < lr.top) activeEl.scrollIntoView({ block: "nearest" });
-      else if (r.bottom > lr.bottom) activeEl.scrollIntoView({ block: "nearest" });
+      if (r.top < lr.top || r.bottom > lr.bottom) {
+        activeEl.scrollIntoView({ block: "nearest" });
+      }
     }
   }
 
-  // ---- listeners ----
   input.addEventListener("focus", () => {
-    // se há seleção, ao focar, mostra o texto inteiro mas seleciona-o
     if (selectedId) input.select();
     open();
   });
 
   input.addEventListener("input", () => {
-    // qualquer mudança manual = desfaz a seleção até o usuário escolher
     if (selectedId) selectedId = "";
     activeIdx = -1;
     open();
@@ -1271,12 +1248,10 @@ function setupCombobox(root, items, opts = {}) {
     clearSelection();
   });
 
-  // fechar ao clicar fora
   document.addEventListener("mousedown", (ev) => {
     if (!root.contains(ev.target)) close();
   });
 
-  // valor inicial
   if (opts.initialId) {
     const it = getItem(opts.initialId);
     if (it) {
@@ -1311,7 +1286,7 @@ function setupCombobox(root, items, opts = {}) {
 }
 
 // ============================================================
-// CLIENTE · MODO URL (extração do ID numérico)
+// CLIENTE · MODO URL
 // ============================================================
 function extractAsaasCustomerId(input) {
   const v = String(input || "").trim();
@@ -1369,13 +1344,11 @@ function renderCustomerSelect() {
   const wrap = $("customer-wrap");
   wrap.innerHTML = comboboxHTML({ placeholder: "Digite o nome ou ID do cliente…" });
   const root = wrap.querySelector(".combo");
-  customerCombo = setupCombobox(root, sortByNameOrId(customers), {
-    onChange: () => {/* nada — valor é lido no submit */}
-  });
+  customerCombo = setupCombobox(root, sortByNameOrId(customers), {});
 }
 
 // ============================================================
-// SPLIT MATH
+// SPLIT MATH / RENDER
 // ============================================================
 function getTotalValue() { return parseNumber($("value").value); }
 
@@ -1387,9 +1360,6 @@ function splitPercentage(row, totalValue) {
   return (n / totalValue) * 100;
 }
 
-// ============================================================
-// RENDER · SPLITS (com combobox de carteira)
-// ============================================================
 function buildEquivalent(row, totalValue) {
   const n = parseNumber(row.input);
   if (isNaN(n) || n <= 0 || !row.walletId) return { text: "", err: false };
@@ -1451,7 +1421,6 @@ function renderSplits() {
     const row = splitRows.find(r => r.id === id);
     if (!row) return;
 
-    // ---- Combobox de carteira ----
     const slot = el.querySelector(".wallet-combo-slot");
     slot.innerHTML = comboboxHTML({ placeholder: "Buscar carteira…", compact: true });
     const comboRoot = slot.querySelector(".combo");
@@ -1464,7 +1433,6 @@ function renderSplits() {
       }
     });
 
-    // ---- Input numérico ----
     const numInput = el.querySelector("[data-field='input']");
     if (numInput) {
       numInput.addEventListener("input", e => {
@@ -1482,7 +1450,6 @@ function renderSplits() {
       });
     }
 
-    // ---- Mode buttons (% / R$) ----
     el.querySelectorAll(".mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         if (row.mode === btn.dataset.mode) return;
@@ -1492,7 +1459,6 @@ function renderSplits() {
       });
     });
 
-    // ---- Remove ----
     const removeBtn = el.querySelector("[data-action='remove']");
     if (removeBtn) {
       removeBtn.addEventListener("click", () => {
@@ -1526,9 +1492,6 @@ function updateRowEquivalent(rowId) {
   }
 }
 
-// ============================================================
-// SUM INDICATOR
-// ============================================================
 function updateSumIndicator() {
   const totalValue = getTotalValue();
   const splitsPctSum = splitRows.reduce((acc, r) => acc + splitPercentage(r, totalValue), 0);
@@ -1602,10 +1565,8 @@ function setChargeType(type) {
   $("value-label").textContent = type === "subscription" ? "Valor da mensalidade" : "Valor total";
   $("duedate-label").textContent = type === "subscription" ? "Próximo vencimento" : "Vencimento";
   $("submit-btn").innerHTML = `<span class="btn-label">${type === "subscription" ? "Gerar assinatura" : "Gerar cobrança"}</span>`;
-
   $("cycle-field").style.display = type === "subscription" ? "" : "none";
   applyBillingTypeUI();
-
   document.querySelector("h1.title").innerHTML = type === "subscription"
     ? 'Nova <em>assinatura</em> com split'
     : 'Nova cobrança <em>com split</em>';
@@ -1656,13 +1617,12 @@ $("value").addEventListener("input", e => {
 $("form").addEventListener("submit", handleSubmit);
 
 // ============================================================
-// SUBMIT
+// SUBMIT (MANTIDO — envia customer cus_xxx e walletId UUID)
 // ============================================================
 async function handleSubmit(e) {
   e.preventDefault();
   hideBanner();
 
-  // Cliente: pega do combobox (modo lista) ou do input de URL (modo url)
   let customer_id = "";
   if (customerMode === "list") {
     customer_id = (customerCombo && customerCombo.getValue()) || "";
@@ -1679,7 +1639,6 @@ async function handleSubmit(e) {
   const dueDate = $("dueDate").value;
   const description = $("description").value.trim();
 
-  // ===== validações =====
   const errors = [];
   if (!customer_id) {
     errors.push(customerMode === "url"
@@ -1735,7 +1694,6 @@ async function handleSubmit(e) {
     return;
   }
 
-  // ===== payload =====
   let payload;
   if (chargeType === "subscription") {
     payload = {
@@ -1764,7 +1722,6 @@ async function handleSubmit(e) {
     }
   }
 
-  // ===== envio =====
   setSubmitting(true);
   try {
     const res = await fetch(CONFIG.WEBHOOK_URL, {
@@ -1778,14 +1735,12 @@ async function handleSubmit(e) {
     try {
       const txt = await res.text();
       console.log("[LP Asaas] Response bruta do webhook:", txt);
-
       if (txt && txt.trim()) {
         try {
           const data = JSON.parse(txt);
           console.log("[LP Asaas] Response parseada:", data);
           paymentLink = extractPaymentLink(data);
         } catch (_) {
-          // Fallback caso o webhook devolva texto puro com o link
           paymentLink = extractPaymentLink(txt);
         }
       }
@@ -1811,9 +1766,6 @@ async function handleSubmit(e) {
   }
 }
 
-// ============================================================
-// RESET / BOOT
-// ============================================================
 function resetForm() {
   $("form").reset();
   splitRows = [];
@@ -1822,7 +1774,7 @@ function resetForm() {
   $("customer_url").value = "";
   updateCustomerUrlFeedback();
   setCustomerMode("list");
-  renderCustomerSelect(); // recria o combobox zerado
+  renderCustomerSelect();
   renderSplits();
   applyBillingTypeUI();
   setDefaultDate();
