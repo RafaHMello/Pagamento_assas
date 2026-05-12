@@ -1305,14 +1305,14 @@ function formatAsaasCustomerId(numericId) {
   return "cus_" + n.padStart(12, "0");
 }
 
-function setCustomerMode(mode) {
+function setCustomerMode(mode, options = {}) {
   customerMode = mode;
   document.querySelectorAll(".customer-mode-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.mode === mode);
   });
   $("customer-wrap").style.display     = mode === "list" ? "" : "none";
   $("customer-url-wrap").style.display = mode === "url"  ? "" : "none";
-  hideBanner();
+if (!options.keepBanner) hideBanner();
 }
 
 function updateCustomerUrlFeedback() {
@@ -1773,7 +1773,7 @@ function resetForm() {
   customerUrlId = "";
   $("customer_url").value = "";
   updateCustomerUrlFeedback();
-  setCustomerMode("list");
+  setCustomerMode("list", { keepBanner: true });
   renderCustomerSelect();
   renderSplits();
   applyBillingTypeUI();
